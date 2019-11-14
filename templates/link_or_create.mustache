@@ -19,6 +19,15 @@
     {{> auth_shibboleth_link/alert}}
 {{/msgs}}
 
+{{#userdata}}
+    <p>{{#str}} auth:shibboleth:welcome, auth_shibboleth_link,
+            {
+                "email": {{# quote }}{{ email }}{{/ quote }}
+                "firstname": {{# quote }}{{ firstname }}{{/ quote }},
+                "lastname": {{# quote }}{{ lastname }}{{/ quote }}
+            }
+        {{/str}}</p>
+{{/userdata}}
 
 <table border="0" class="generaltable">
     <tbody>

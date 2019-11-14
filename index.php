@@ -101,6 +101,7 @@ if (!empty($_SERVER[$pluginconfig->user_attribute])) {    // Shibboleth auto-log
         'idpusername' => $idpparams['idpusername'],
         'isloggedin' => (isloggedin() && !isguestuser($USER)) ? 1 : 0,
         'msgs' => $msgs,
+        'userdata' => array($idpparams['userdata']),
         'userfullname' => \fullname($USER),
     ));
     echo $OUTPUT->footer();

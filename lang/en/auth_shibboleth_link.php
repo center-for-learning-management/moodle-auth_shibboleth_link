@@ -30,6 +30,7 @@ $string['auth:linkaccount'] = 'Link current account';
 $string['auth:linkaccount:description'] = 'Link the shibboleth login with the account you are currently using.';
 $string['auth:linkotheraccount'] = 'Link another account';
 $string['auth:linkotheraccount:description'] = 'Link the shibboleth login with another account.';
+$string['auth:shibboleth:welcome'] = 'Hello {$a->firstname} {$a->lastname}!<br /><br />How would you like to use this login on our site?';
 $string['auth:warning:usergone'] = 'Your shibboleth account has been linked to a user account that does not exist anymore. Therefore it has been unlinked.';
 
 $string['cachedef_userinfo'] = 'Holds the userinfo after shibboleth';
