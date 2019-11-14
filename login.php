@@ -6,6 +6,7 @@ require_once("../../config.php");
 require_once($CFG->dirroot."/auth/shibboleth/auth.php");
 
 $idp = optional_param('idp', null, PARAM_RAW);
+$replacelink = optional_param('replacelink', 0, PARAM_BOOL);
 
 // Check for timed out sessions.
 if (!empty($SESSION->has_timed_out)) {
@@ -36,7 +37,7 @@ if (isset($idp)) {
     if (isset($idplist[$idp])) {
         set_saml_cookie($idp);
 
-        $targeturl = new moodle_url('/auth/shibboleth_link/index.php');
+        $targeturl = new moodle_url('/auth/shibboleth_link/index.php', array('replacelink' => $replacelink));
         $idpinfo = $idplist[$idp];
 
         // Redirect to SessionInitiator with entityID as argument.

@@ -26,12 +26,17 @@ $string['pluginname'] = 'Shibboleth Link';
 
 $string['auth:createaccount'] = 'Create account';
 $string['auth:createaccount:description'] = 'Create a new account for your shibboleth login.';
+$string['auth:createaccount:error'] = 'Could not create account.';
+$string['auth:createaccount:userexists'] = 'Sorry, a user with your username already exists. If that is you, please choose the option "Link another account" and log in as this user.';
 $string['auth:linkaccount'] = 'Link current account';
 $string['auth:linkaccount:description'] = 'Link the shibboleth login with the account you are currently using.';
 $string['auth:linkotheraccount'] = 'Link another account';
 $string['auth:linkotheraccount:description'] = 'Link the shibboleth login with another account.';
-$string['auth:shibboleth:welcome'] = 'Hello {$a->firstname} {$a->lastname}!<br /><br />How would you like to use this login on our site?';
+$string['auth:replacelink'] = 'Check this to replace an existing link between your remote and local accounts.';
+$string['auth:shibboleth:welcome'] = 'Welcome';
+$string['auth:shibboleth:welcome:question'] = 'How would you like to use this login on our site?';
 $string['auth:warning:usergone'] = 'Your shibboleth account has been linked to a user account that does not exist anymore. Therefore it has been unlinked.';
+$string['auth:warning:userreplaced'] = 'As requested your shibboleth login has been unlinked from your moodle account.';
 
 $string['cachedef_userinfo'] = 'Holds the userinfo after shibboleth';
 

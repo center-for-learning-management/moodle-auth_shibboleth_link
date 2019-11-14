@@ -89,41 +89,13 @@
                         <p class="form-text text-muted mt-1 mb-1">
                             {{#str}}auth_shib_contact_administrator, auth_shibboleth, {{adminemail}}{{/str}}
                         </p>
+                        <label>
+                            <input type="checkbox" name="replacelink" />
+                            {{#str}} auth:replacelink, auth_shibboleth_link{{/str}}
+                        </label>
                     </form>
                 </div>
-                {{#guestlogin}}
-                <div class="col-md-5">
-                    <p>
-                        {{#str}}someallowguest, moodle{{/str}}
-                    </p>
-                    <form action="{{guestloginurl}}" method="post" id="guestlogin">
-                        <div class="guestform">
-                            <input type="hidden" name="logintoken" value="{{logintoken}}">
-                            <input type="hidden" name="username" value="guest">
-                            <input type="hidden" name="password" value="guest">
-                            <button type="submit" class="btn btn-secondary btn-block">
-                                {{#str}}loginguest, moodle{{/str}}
-                            </button>
-                        </div>
-                    </form>
-                </div>
-                {{/guestlogin}}
             </div>
         </div>
     </div>
-    {{#showinstructions}}
-    <div class="card mt-1">
-        <div class="card-body ml-1 mr-1 mb-1">
-            <h2 class="card-title">{{#str}}firsttime, moodle{{/str}}</h2>
-            <p>
-                {{{instructions}}}
-            </p>
-            {{#cansignup}}
-            <form action="{{signupurl}}" method="get" id="signup">
-                <button type="submit" class="btn btn-secondary">{{#str}}startsignup, moodle{{/str}}</button>
-            </form>
-            {{/cansignup}}
-        </div>
-    </div>
-    {{/showinstructions}}
 </div>

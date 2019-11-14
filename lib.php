@@ -30,6 +30,8 @@ class lib {
     public static $ACTION_LINK_OTHER = 2;
     public static $ACTION_LINK_CURRENT = 3;
 
+    private static $datahash = '';
+
     /**
      * Check status after complete_user_login
      */
@@ -49,7 +51,7 @@ class lib {
         }
 
         /// Go to my-moodle page instead of homepage if defaulthomepage enabled
-        if (!has_capability('moodle/site:config',context_system::instance()) and !empty($CFG->defaulthomepage) && $CFG->defaulthomepage == HOMEPAGE_MY and !isguestuser()) {
+        if (!\has_capability('moodle/site:config', \context_system::instance()) and !empty($CFG->defaulthomepage) && $CFG->defaulthomepage == HOMEPAGE_MY and !isguestuser()) {
             if ($urltogo == $CFG->wwwroot or $urltogo == $CFG->wwwroot.'/' or $urltogo == $CFG->wwwroot.'/index.php') {
                 $urltogo = $CFG->wwwroot.'/my/';
             }
@@ -58,12 +60,23 @@ class lib {
         redirect($urltogo);
     }
     /**
+     * Create some unique hash out of idpparams.
+     * @return the hash
+     */
+    public static function datahash($idpparams) {
+        if (!empty(\optional_param('datahash', '', PARAM_RAW))) self::$datahash = \optional_param('datahash', '', PARAM_RAW);
+        if (empty(self::$datahash)) self::$datahash = md5(json_encode($idpparams));
+        return self::$datahash;
+    }
+    /**
      * Retrieves idp and idpusername from cache
      * @return array containing data.
      */
     public static function link_data_from_cache() {
+        // Attention, we use cache_store::MODE_APPLICATION that shares data through all users.
+        // This is necessary to have the data persisting login/logout. Therefore we include the data_hash into the name.
         $cache = \cache::make('auth_shibboleth_link', 'userinfo');
-        return json_decode($cache->get('json'), true);
+        return json_decode($cache->get('json_' . self::datahash()), true);
     }
     /**
      * Retrieves idp and idpusername from $_SERVER-var
@@ -71,6 +84,7 @@ class lib {
      */
     public static function link_data_from_server() {
         global $_SERVER;
+        $pluginconfig   = get_config('auth_shibboleth');
         $shibbolethauth = get_auth_plugin('shibboleth');
 
         return array(
@@ -84,8 +98,10 @@ class lib {
      * @param $idpparams array containing params.
      */
     public static function link_data_store_cache($idpparams) {
+        // Attention, we use cache_store::MODE_APPLICATION that shares data through all users.
+        // This is necessary to have the data persisting login/logout. Therefore we include datahash into the name.
         $cache = \cache::make('auth_shibboleth_link', 'userinfo');
-        $cache->set('json', json_encode($idpparams, JSON_NUMERIC_CHECK));
+        $cache->set('json_' . self::datahash(), json_encode($idpparams, JSON_NUMERIC_CHECK));
     }
     /**
      * Retrieves a link based on params
@@ -95,12 +111,13 @@ class lib {
     public static function link_get($idpparams) {
         global $DB;
         $link = $DB->get_record('auth_shibboleth_link', array('idp' => $idpparams['idp'], 'idpusername' => $idpparams['idpusername']));
+        return $link;
     }
     /**
      * Sets the used time of a link.
      * @param $link
      */
-    public static function link_log_used($params) {
+    public static function link_log_used($link) {
         global $DB;
         $link->lastseen = time();
         $DB->update_record('auth_shibboleth_link', $link);
@@ -112,13 +129,21 @@ class lib {
     public static function link_store() {
         global $DB, $USER;
         $idpparams = self::link_data_from_cache();
-        $link = array(
-            'created' => time(),
-            'idp' => $idpparams['idp'],
-            'idpusername' => $idpparams['idpusername'],
-            'lastseen' => time(),
-            'userid' => $USER->id,
-        );
-        return $DB->insert_record('auth_shibboleth_link', $link);
+        $link = $DB->get_record('auth_shibboleth_link', array('idp' => $idpparams['idp'], 'idpusername' => $idpparams['idpusername']));
+        if (!empty($link->id)) {
+            $link->userid = $USER->id;
+            $link->lastseen = time();
+            $DB->update_record('auth_shibboleth_link', $link);
+            return $link->id;
+        } else {
+            $link = array(
+                'created' => time(),
+                'idp' => $idpparams['idp'],
+                'idpusername' => $idpparams['idpusername'],
+                'lastseen' => time(),
+                'userid' => $USER->id,
+            );
+            return $DB->insert_record('auth_shibboleth_link', $link);
+        }
     }
 }

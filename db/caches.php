@@ -25,6 +25,6 @@ defined('MOODLE_INTERNAL') || die;
 
 $definitions = [
     'userinfo' => [
-        'mode' => cache_store::MODE_SESSION
+        'mode' => cache_store::MODE_APPLICATION
     ]
 ];
