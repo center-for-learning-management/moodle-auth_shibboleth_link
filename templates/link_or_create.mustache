@@ -19,20 +19,39 @@
     {{> auth_shibboleth_link/alert}}
 {{/msgs}}
 
-<table border="0">
+
+<table border="0" class="generaltable">
     <tbody>
+        {{#isloggedin}}
         <tr>
-            <td width="50%" align="center">
-                {{#str}} auth:createaccount:description, auth_shibboleth_link {{/str}}<br /><br />
-                <a href="?linkorcreate=2" class="btn btn-secondary">
-                    {{#str}} auth:createaccount, auth_shibboleth_link {{/str}}
+            <td>
+                <a href="?linkorcreate=3" class="btn btn-secondary">
+                    {{#pix}} i/checkpermissions {{/pix}}
+                    {{#str}} auth:linkaccount, auth_shibboleth_link, { "userfullname": {{# quote }}{{ userfullname }}{{/ quote }} } {{/str}}
                 </a>
+                <br /><br />
+                {{#str}} auth:linkaccount:description, auth_shibboleth_link {{/str}}
             </td>
-            <td align="center">
-                {{#str}} auth:linkaccount:description, auth_shibboleth_link {{/str}}<br /><br />
-                <a href="?linkorcreate=1" class="btn btn-secondary">
-                    {{#str}} auth:linkaccount, auth_shibboleth_link {{/str}}
+        </tr>
+        {{/isloggedin}}
+        <tr>
+            <td>
+                <a href="?linkorcreate=2" class="btn btn-secondary">
+                    {{#pix}} i/cohort {{/pix}}
+                    {{#str}} auth:linkotheraccount, auth_shibboleth_link {{/str}}
                 </a>
+                <br /><br />
+                {{#str}} auth:linkotheraccount:description, auth_shibboleth_link {{/str}}
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <a href="?linkorcreate=1" class="btn btn-secondary">
+                    {{#pix}} i/assignroles {{/pix}}
+                    {{#str}} auth:createaccount, auth_shibboleth_link, { "idpusername": {{# quote }}{{ idpusername }}{{/ quote }} } {{/str}}
+                </a>
+                <br /><br />
+                {{#str}} auth:createaccount:description, auth_shibboleth_link {{/str}}
             </td>
         </tr>
     </tbody>

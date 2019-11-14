@@ -28,19 +28,30 @@ if ($linkorcreate > 0) {
             complete_user_login($user);
             \auth_shibboleth_link\lib::check_login();
         break;
-        case \auth_shibboleth_link\lib::$ACTION_LINK:
+        case \auth_shibboleth_link\lib::$ACTION_LINK_CURRENT:
             if (isloggedin() && !isguestuser()) {
                 // Link user.
                 \auth_shibboleth_link\lib::link_store();
                 // Check user status and redirect.
                 \auth_shibboleth_link\lib::check_login();
             } else {
-                // @TODO we will loose the current SESSION->wantsurl here!
-                // Store this page as wantsurl.
-                $SESSION->wantsurl = '' . $PAGE->url;
+                // We logged out in the meanwhile. Go to login page.
+                $SESSION->wantsurl = $CFG->wwwroot . '/auth/shibboleth_link/index.php?linkorcreate=' . \auth_shibboleth_link\lib::$ACTION_LINK_CURRENT;
                 // Redirect to normal login.
                 redirect($CFG->wwwroot . '/login/index.php');
             }
+        break;
+        case \auth_shibboleth_link\lib::$ACTION_LINK_OTHER:
+            // Capture wantsurl before the session is destroyed by logout.
+            $wantsurl = $SESSION->wantsurl;
+            if (isloggedin() && !isguestuser()) {
+                require_logout();
+            }
+            // @TODO we will loose the current SESSION->wantsurl here! we should cache it somehow!
+            // Store this page as wantsurl.
+            $SESSION->wantsurl = $CFG->wwwroot . '/auth/shibboleth_link/index.php?linkorcreate=' . \auth_shibboleth_link\lib::$ACTION_LINK_CURRENT;
+            // Redirect to normal login.
+            redirect($CFG->wwwroot . '/login/index.php');
         break;
     }
 }
@@ -86,7 +97,12 @@ if (!empty($_SERVER[$pluginconfig->user_attribute])) {    // Shibboleth auto-log
     $PAGE->set_heading(get_string('auth:linkaccount', 'auth_shibboleth_link'));
     $PAGE->set_title(get_string('auth:linkaccount', 'auth_shibboleth_link'));
     echo $OUTPUT->header();
-    echo $OUTPUT->render_from_template('auth_shibboleth_link/link_or_create', array('msgs' => $msgs));
+    echo $OUTPUT->render_from_template('auth_shibboleth_link/link_or_create', array(
+        'idpusername' => $idpparams['idpusername'],
+        'isloggedin' => (isloggedin() && !isguestuser($USER)) ? 1 : 0,
+        'msgs' => $msgs,
+        'userfullname' => \fullname($USER),
+    ));
     echo $OUTPUT->footer();
 
 }

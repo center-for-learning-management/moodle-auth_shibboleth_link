@@ -27,7 +27,8 @@ defined('MOODLE_INTERNAL') || die;
 
 class lib {
     public static $ACTION_CREATE = 1;
-    public static $ACTION_LINK = 2;
+    public static $ACTION_LINK_OTHER = 2;
+    public static $ACTION_LINK_CURRENT = 3;
 
     /**
      * Check status after complete_user_login
@@ -62,7 +63,7 @@ class lib {
      */
     public static function link_data_from_cache() {
         $cache = \cache::make('auth_shibboleth_link', 'userinfo');
-        return json_decode($cache->get('json'));
+        return json_decode($cache->get('json'), true);
     }
     /**
      * Retrieves idp and idpusername from $_SERVER-var
