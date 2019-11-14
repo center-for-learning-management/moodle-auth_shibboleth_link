@@ -37,6 +37,7 @@ $string['auth:shibboleth:welcome'] = 'Willkommen';
 $string['auth:shibboleth:welcome:question'] = 'Womit möchten Sie diese Zugangsmethode verknüpfen?';
 $string['auth:warning:usergone'] = 'Ihr Shibboleth-Zugang war mit einem Konto verbunden, das nicht mehr existiert. Daher wurde die Verbindung gelöscht.';
 $string['auth:warning:userreplaced'] = 'Wie von Ihnen beauftragt wurde die Verbindung dieses Zugangs zu lokalen Konten gelöscht.';
+$string['auth:warning:userreplacenotallowed'] = 'Der Zugriff auf dieses Konto ist ausschließlich über Shibboleth möglich. Daher kann diese Verbindung nicht gelöst werden!';
 
 $string['cachedef_userinfo'] = 'Hält Benutzerinformationen im Cache.';
 

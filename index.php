@@ -40,6 +40,8 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
                 $userid = \user_create_user($idpparams['userinfo']);
                 if (!empty($userid)) {
                     $user = $DB->get_record('user', array('id' => $userid));
+                    $user->auth = 'shibboleth_link';
+                    $DB->update_record('user', $user);
                     \complete_user_login($user);
                     \auth_shibboleth_link\lib::link_store();
                     \auth_shibboleth_link\lib::check_login();
@@ -102,16 +104,32 @@ if (!empty($_SERVER[$pluginconfig->user_attribute])) {    // Shibboleth auto-log
         \auth_shibboleth_link\lib::link_log_used($link);
 
         $user = core_user::get_user($link->userid, '*', IGNORE_MISSING);
-        if (!empty($user->id) && $user->id == $link->userid && $replacelink === 0) {
-            complete_user_login($user);
-            \auth_shibboleth_link\lib::check_login();
+        if ($replacelink === 1) {
+            if ($user->auth == 'shibboleth_link') {
+                $msgs[] = array(
+                    'type' => 'warning',
+                    'content' => get_string('auth:warning:userreplacenotallowed', 'auth_shibboleth_link'),
+                );
+            } else {
+                $DB->delete_records('auth_shibboleth_link', array('id' => $link->id));
+                unset($link);
+                $msgs[] = array(
+                    'type' => 'warning',
+                    'content' => get_string('auth:warning:userreplaced', 'auth_shibboleth_link'),
+                );
+            }
         } else {
             // Show an error that the linked account has gone.
             $DB->delete_records('auth_shibboleth_link', array('id' => $link->id));
+            unset($link);
             $msgs[] = array(
                 'type' => 'warning',
-                'content' => ($replacelink === 0) ? get_string('auth:warning:usergone', 'auth_shibboleth_link') : get_string('auth:warning:userreplaced', 'auth_shibboleth_link') ,
+                'content' => get_string('auth:warning:usergone', 'auth_shibboleth_link'),
             );
+        }
+        if (!empty($user->id) && $user->id == $link->userid) {
+            complete_user_login($user);
+            \auth_shibboleth_link\lib::check_login();
         }
     }
 
@@ -125,7 +143,7 @@ if (!empty($_SERVER[$pluginconfig->user_attribute])) {    // Shibboleth auto-log
     $PAGE->set_title(get_string('auth:linkaccount', 'auth_shibboleth_link'));
     echo $OUTPUT->header();
     echo $OUTPUT->render_from_template('auth_shibboleth_link/link_or_create', array(
-        'datahash' => \auth_shibboleth_link\lib::datahash(),
+        'datahash' => \auth_shibboleth_link\lib::datahash($idpparams),
         'idpusername' => $idpparams['idpusername'],
         'isloggedin' => (isloggedin() && !isguestuser($USER)) ? 1 : 0,
         'msgs' => $msgs,

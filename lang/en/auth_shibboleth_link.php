@@ -37,6 +37,7 @@ $string['auth:shibboleth:welcome'] = 'Welcome';
 $string['auth:shibboleth:welcome:question'] = 'How would you like to use this login on our site?';
 $string['auth:warning:usergone'] = 'Your shibboleth account has been linked to a user account that does not exist anymore. Therefore it has been unlinked.';
 $string['auth:warning:userreplaced'] = 'As requested your shibboleth login has been unlinked from your moodle account.';
+$string['auth:warning:userreplacenotallowed'] = 'Access to this account is only possible with Shibboleth. Consequently the link can not be removed!';
 
 $string['cachedef_userinfo'] = 'Holds the userinfo after shibboleth';
 

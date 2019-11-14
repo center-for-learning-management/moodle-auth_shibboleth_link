@@ -63,9 +63,9 @@ class lib {
      * Create some unique hash out of idpparams.
      * @return the hash
      */
-    public static function datahash($idpparams) {
+    public static function datahash($idpparams = array()) {
         if (!empty(\optional_param('datahash', '', PARAM_RAW))) self::$datahash = \optional_param('datahash', '', PARAM_RAW);
-        if (empty(self::$datahash)) self::$datahash = md5(json_encode($idpparams));
+        if (empty(self::$datahash) && !empty($idpparams)) self::$datahash = md5(json_encode($idpparams));
         return self::$datahash;
     }
     /**
@@ -101,7 +101,7 @@ class lib {
         // Attention, we use cache_store::MODE_APPLICATION that shares data through all users.
         // This is necessary to have the data persisting login/logout. Therefore we include datahash into the name.
         $cache = \cache::make('auth_shibboleth_link', 'userinfo');
-        $cache->set('json_' . self::datahash(), json_encode($idpparams, JSON_NUMERIC_CHECK));
+        $cache->set('json_' . self::datahash($idpparams), json_encode($idpparams, JSON_NUMERIC_CHECK));
     }
     /**
      * Retrieves a link based on params
