@@ -27,6 +27,7 @@ $string['pluginname'] = 'Shibboleth Link';
 $string['auth:createaccount'] = 'Create account';
 $string['auth:createaccount:description'] = 'Create a new account for your shibboleth login.';
 $string['auth:createaccount:error'] = 'Could not create account.';
+$string['auth:createaccount:success'] = 'Account created.';
 $string['auth:createaccount:userexists'] = 'Sorry, a user with your username already exists. If that is you, please choose the option "Link another account" and log in as this user.';
 $string['auth:linkaccount'] = 'Link current account';
 $string['auth:linkaccount:description'] = 'Link the shibboleth login with the account you are currently using.';

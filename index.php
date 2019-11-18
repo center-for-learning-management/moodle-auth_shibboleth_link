@@ -11,8 +11,12 @@ $datahash = optional_param('datahash', '', PARAM_RAW);
 $linkorcreate = optional_param('linkorcreate', 0, PARAM_INT);
 $replacelink = optional_param('replacelink', 0, PARAM_INT);
 $context = context_system::instance();
-$PAGE->set_url('/auth/shibboleth_link/index.php', array('datahash' => $datahash, 'linkorcreate' => $linkorcreate));
+
 $PAGE->set_context($context);
+$PAGE->set_heading(get_string('pluginname', 'auth_shibboleth_link'));
+$PAGE->set_title(get_string('pluginname', 'auth_shibboleth_link'));
+$PAGE->set_pagelayout('mydashboard');
+$PAGE->set_url('/auth/shibboleth_link/index.php', array('datahash' => $datahash, 'linkorcreate' => $linkorcreate));
 
 $idpparams = \auth_shibboleth_link\lib::link_data_from_cache();
 if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
@@ -20,18 +24,22 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
     switch($linkorcreate) {
         case \auth_shibboleth_link\lib::$ACTION_CREATE: // == 1
             // Test if a user with that username already exists.
-            $testuser = $DB->get_record('user', array('username' => $idpparams['idpusername']));
-            if (!empty($testuser->id)) {
+            $testuser = $DB->get_record('user', array('deleted' => 0, 'username' => $idpparams['idpusername']));
+            if (!empty($testuser->id) && $testuser->deleted == 0) {
                 // If that user is a shibboleth_link-account we use it.
                 if ($testuser->auth == 'shibboleth_link') {
-                    $user = core_user::get_user($testuser->id, '*', IGNORE_MISSING);
-                    \complete_user_login($user);
+                    $user = core_user::get_user($testuser->id);
+                    complete_user_login($user);
                     \auth_shibboleth_link\lib::link_store();
                     \auth_shibboleth_link\lib::check_login();
+                    echo $OUTPUT->header();
+                    echo $OUTPUT->render_from_template('auth_shibboleth_link/alert', array(
+                        'content' => get_string('auth:createaccount:success', 'auth_shibboleth_link'),
+                        'type' => 'success',
+                        'url' => $CFG->wwwroot . '/my',
+                    ));
+                    echo $OUTPUT->footer();
                 } else {
-                    $PAGE->set_context(\context_system::instance());
-                    $PAGE->set_heading(get_string('error'));
-                    $PAGE->set_title(get_string('error'));
                     echo $OUTPUT->header();
                     echo $OUTPUT->render_from_template('auth_shibboleth_link/alert', array(
                         'content' => get_string('auth:createaccount:userexists', 'auth_shibboleth_link'),
@@ -40,7 +48,6 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
                     ));
                     echo $OUTPUT->footer();
                 }
-                die();
             } else {
                 // Create a user with the information from shibboleth.
                 require_once($CFG->dirroot . '/user/lib.php');
@@ -51,9 +58,17 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
                     $user = core_user::get_user($userid, '*', IGNORE_MISSING);
                     $user->auth = 'shibboleth_link';
                     $DB->update_record('user', $user);
-                    \complete_user_login($user);
-                    \auth_shibboleth_link\lib::link_store();
-                    \auth_shibboleth_link\lib::check_login();
+                    complete_user_login($user);
+                    \auth_shibboleth_link\lib::link_store($user);
+                    $urltogo = \auth_shibboleth_link\lib::check_login(false);
+                    redirect($urltogo, 100, get_string('auth:createaccount:success', 'auth_shibboleth_link'), \core\output\notification::NOTIFY_SUCCESS);
+                    echo $OUTPUT->header();
+                    echo $OUTPUT->render_from_template('auth_shibboleth_link/alert', array(
+                        'content' => get_string('auth:createaccount:success', 'auth_shibboleth_link'),
+                        'type' => 'success',
+                        'url' => $CFG->wwwroot . '/my',
+                    ));
+                    echo $OUTPUT->footer();
                 } else {
                     echo $OUTPUT->header();
                     echo $OUTPUT->render_from_template('auth_shibboleth_link/alert', array(
@@ -138,16 +153,16 @@ if (!empty($_SERVER[$pluginconfig->user_attribute])) {    // Shibboleth auto-log
             );
         }
 
-        if (!empty($user->id) && $user->id == $link->userid) {
+        if (!empty($user->id) && $user->id == $link->userid && $user->deleted == 0) {
             complete_user_login($user);
             \auth_shibboleth_link\lib::check_login();
         }
     } else {
         // Normally this should not happen.
         // We check here if there is already a shibboleth_link-account with that username.
-        $user = $DB->get_record('user', array('auth' => 'shibboleth_link', 'username' => $idpparams['idpusername']));
-        if (!empty($user->id)) {
-            $user = core_user::get_user($user->id, '*', IGNORE_MISSING);
+        $user = $DB->get_record('user', array('auth' => 'shibboleth_link', 'deleted' => 0, 'username' => $idpparams['idpusername']));
+        if (!empty($user->id) && $user->deleted == 0) {
+            $user = core_user::get_user($user->id);
             complete_user_login($user);
             \auth_shibboleth_link\lib::check_login();
         }
@@ -157,8 +172,6 @@ if (!empty($_SERVER[$pluginconfig->user_attribute])) {    // Shibboleth auto-log
     // Store the user info from shibboleth in the cache.
     \auth_shibboleth_link\lib::link_data_store_cache($idpparams);
     // Ask user if we should create an account or link to an existing one!
-    $PAGE->set_context(context_system::instance());
-    $PAGE->set_pagelayout('dashboard');
     $PAGE->set_heading(get_string('auth:linkaccount', 'auth_shibboleth_link'));
     $PAGE->set_title(get_string('auth:linkaccount', 'auth_shibboleth_link'));
     echo $OUTPUT->header();

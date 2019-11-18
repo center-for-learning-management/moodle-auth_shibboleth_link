@@ -27,6 +27,7 @@ $string['pluginname'] = 'Shibboleth Verbindung';
 $string['auth:createaccount'] = 'Konto anlegen';
 $string['auth:createaccount:description'] = 'Ein neues Konto mit diesem Zugang anlegen.';
 $string['auth:createaccount:error'] = 'Leider konnte das Konto nicht angelegt werden.';
+$string['auth:createaccount:success'] = 'Konto erstellt.';
 $string['auth:createaccount:userexists'] = 'Entschuldigung, aber ein/e Nutzer/in mit diesem Benutzernamen existiert bereits. Falls Sie das sind, nutzen Sie bitte die Option "Mit bestehendem Konto anmelden" und melden Sie sich mit diesem Konto an.';
 $string['auth:linkaccount'] = 'Aktuelles Konto verbinden';
 $string['auth:linkaccount:description'] = 'Verbinden Sie Ihren Login mit jenem Konto, mit dem Sie gerade angemeldet sind.';

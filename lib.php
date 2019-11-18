@@ -34,10 +34,12 @@ class lib {
 
     /**
      * Check status after complete_user_login
+     * @param doredirect true if we should do the redirect, false if we just return the url.
+     * @return the url.
      */
-    public static function check_login() {
+    public static function check_login($doredirect = true) {
         global $CFG, $SESSION, $USER;
-        if (user_not_fully_set_up($USER, true)) {
+        if (\user_not_fully_set_up($USER, true)) {
             $urltogo = $CFG->wwwroot.'/user/edit.php?id='.$USER->id.'&amp;course='.SITEID;
             // We don't delete $SESSION->wantsurl yet, so we get there later
 
@@ -56,8 +58,8 @@ class lib {
                 $urltogo = $CFG->wwwroot.'/my/';
             }
         }
-
-        redirect($urltogo);
+        if ($doredirect) \redirect($urltogo);
+        else return $urltogo;
     }
     /**
      * Create some unique hash out of idpparams.
@@ -84,8 +86,8 @@ class lib {
      */
     public static function link_data_from_server() {
         global $_SERVER;
-        $pluginconfig   = get_config('auth_shibboleth');
-        $shibbolethauth = get_auth_plugin('shibboleth');
+        $pluginconfig   = \get_config('auth_shibboleth');
+        $shibbolethauth = \get_auth_plugin('shibboleth');
 
         return array(
             'idp' => $_SERVER['Shib-Identity-Provider'],
@@ -126,12 +128,13 @@ class lib {
      * Get current idpparams from cache and create a link to the current user.
      * @return the id of the link-entry.
      */
-    public static function link_store() {
+    public static function link_store($user = 0) {
         global $DB, $USER;
+        if (empty($user)) $user = $USER;
         $idpparams = self::link_data_from_cache();
         $link = $DB->get_record('auth_shibboleth_link', array('idp' => $idpparams['idp'], 'idpusername' => $idpparams['idpusername']));
         if (!empty($link->id)) {
-            $link->userid = $USER->id;
+            $link->userid = $user->id;
             $link->lastseen = time();
             $DB->update_record('auth_shibboleth_link', $link);
             return $link->id;
@@ -141,7 +144,7 @@ class lib {
                 'idp' => $idpparams['idp'],
                 'idpusername' => $idpparams['idpusername'],
                 'lastseen' => time(),
-                'userid' => $USER->id,
+                'userid' => $user->id,
             );
             return $DB->insert_record('auth_shibboleth_link', $link);
         }
