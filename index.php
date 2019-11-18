@@ -27,7 +27,7 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
             $testuser = $DB->get_record('user', array('deleted' => 0, 'username' => $idpparams['idpusername']));
             if (!empty($testuser->id) && $testuser->deleted == 0) {
                 // If that user is a shibboleth_link-account we use it.
-                if ($testuser->auth == 'shibboleth_link') {
+                if ($testuser->auth == 'shibboleth') {
                     $user = core_user::get_user($testuser->id);
                     complete_user_login($user);
                     \auth_shibboleth_link\lib::link_store();
@@ -56,7 +56,7 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
                 $userid = \user_create_user($idpparams['userinfo']);
                 if (!empty($userid)) {
                     $user = core_user::get_user($userid, '*', IGNORE_MISSING);
-                    $user->auth = 'shibboleth_link';
+                    $user->auth = 'shibboleth';
                     $DB->update_record('user', $user);
                     complete_user_login($user);
                     \auth_shibboleth_link\lib::link_store($user);
@@ -129,7 +129,7 @@ if (!empty($_SERVER[$pluginconfig->user_attribute])) {    // Shibboleth auto-log
         $user = core_user::get_user($link->userid, '*', IGNORE_MISSING);
 
         // We can only check to remove the user_link if this is not a shibboleth_link-account.
-        if ($user->auth != 'shibboleth_link') {
+        if ($user->auth != 'shibboleth') {
             if ($replacelink === 1) {
                 $DB->delete_records('auth_shibboleth_link', array('id' => $link->id));
                 unset($link);
