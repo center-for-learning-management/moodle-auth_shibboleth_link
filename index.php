@@ -20,18 +20,27 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
     switch($linkorcreate) {
         case \auth_shibboleth_link\lib::$ACTION_CREATE: // == 1
             // Test if a user with that username already exists.
-            $testuser = $DB->get_record('user', array('username' => $idpparams['userinfo']['username']));
+            $testuser = $DB->get_record('user', array('username' => $idpparams['idpusername']));
             if (!empty($testuser->id)) {
-                $PAGE->set_context(\context_system::instance());
-                $PAGE->set_heading(get_string('error'));
-                $PAGE->set_title(get_string('error'));
-                echo $OUTPUT->header();
-                echo $OUTPUT->render_from_template('auth_shibboleth_link/alert', array(
-                    'content' => get_string('auth:createaccount:userexists', 'auth_shibboleth_link'),
-                    'type' => 'warning',
-                    'url' => $CFG->wwwroot . '/auth/shibboleth_link/index.php?datahash=' . $datahash . '&linkorcreate=' . \auth_shibboleth_link\lib::$ACTION_LINK_OTHER,
-                ));
-                echo $OUTPUT->footer();
+                // If that user is a shibboleth_link-account we use it.
+                if ($testuser->auth == 'shibboleth_link') {
+                    $user = core_user::get_user($testuser->id, '*', IGNORE_MISSING);
+                    \complete_user_login($user);
+                    \auth_shibboleth_link\lib::link_store();
+                    \auth_shibboleth_link\lib::check_login();
+                } else {
+                    $PAGE->set_context(\context_system::instance());
+                    $PAGE->set_heading(get_string('error'));
+                    $PAGE->set_title(get_string('error'));
+                    echo $OUTPUT->header();
+                    echo $OUTPUT->render_from_template('auth_shibboleth_link/alert', array(
+                        'content' => get_string('auth:createaccount:userexists', 'auth_shibboleth_link'),
+                        'type' => 'warning',
+                        'url' => $CFG->wwwroot . '/auth/shibboleth_link/index.php?datahash=' . $datahash . '&linkorcreate=' . \auth_shibboleth_link\lib::$ACTION_LINK_OTHER,
+                    ));
+                    echo $OUTPUT->footer();
+                }
+                die();
             } else {
                 // Create a user with the information from shibboleth.
                 require_once($CFG->dirroot . '/user/lib.php');
@@ -39,7 +48,7 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
                 $idpparams['userinfo']['mnethostid'] = 1;
                 $userid = \user_create_user($idpparams['userinfo']);
                 if (!empty($userid)) {
-                    $user = $DB->get_record('user', array('id' => $userid));
+                    $user = core_user::get_user($userid, '*', IGNORE_MISSING);
                     $user->auth = 'shibboleth_link';
                     $DB->update_record('user', $user);
                     \complete_user_login($user);
@@ -98,36 +107,47 @@ if (empty($pluginconfig->user_attribute)) {
 if (!empty($_SERVER[$pluginconfig->user_attribute])) {    // Shibboleth auto-login
     $idpparams = \auth_shibboleth_link\lib::link_data_from_server();
     $link = \auth_shibboleth_link\lib::link_get($idpparams);
-
     $msgs = array();
     if (!empty($link->userid)) {
         \auth_shibboleth_link\lib::link_log_used($link);
 
         $user = core_user::get_user($link->userid, '*', IGNORE_MISSING);
-        if ($replacelink === 1) {
-            if ($user->auth == 'shibboleth_link') {
-                $msgs[] = array(
-                    'type' => 'warning',
-                    'content' => get_string('auth:warning:userreplacenotallowed', 'auth_shibboleth_link'),
-                );
-            } else {
+
+        // We can only check to remove the user_link if this is not a shibboleth_link-account.
+        if ($user->auth != 'shibboleth_link') {
+            if ($replacelink === 1) {
                 $DB->delete_records('auth_shibboleth_link', array('id' => $link->id));
                 unset($link);
                 $msgs[] = array(
-                    'type' => 'warning',
+                    'type' => 'success',
                     'content' => get_string('auth:warning:userreplaced', 'auth_shibboleth_link'),
                 );
+            } else {
+                // Show an error that the linked account has gone.
+                $DB->delete_records('auth_shibboleth_link', array('id' => $link->id));
+                unset($link);
+                $msgs[] = array(
+                    'type' => 'danger',
+                    'content' => get_string('auth:warning:usergone', 'auth_shibboleth_link'),
+                );
             }
-        } else {
-            // Show an error that the linked account has gone.
-            $DB->delete_records('auth_shibboleth_link', array('id' => $link->id));
-            unset($link);
+        } elseif ($replacelink === 1) {
             $msgs[] = array(
-                'type' => 'warning',
-                'content' => get_string('auth:warning:usergone', 'auth_shibboleth_link'),
+                'type' => 'danger',
+                'content' => get_string('auth:warning:userreplacenotallowed', 'auth_shibboleth_link'),
             );
         }
+
         if (!empty($user->id) && $user->id == $link->userid) {
+            complete_user_login($user);
+            \auth_shibboleth_link\lib::check_login();
+        }
+    } else {
+        // Normally this should not happen.
+        // We check here if there is already a shibboleth_link-account with that username.
+        $user = $DB->get_record('user', array('auth' => 'shibboleth_link', 'username' => $idpparams['idpusername']));
+        if (!empty($user->id)) {
+            $user = core_user::get_user($user->id, '*', IGNORE_MISSING);
             complete_user_login($user);
             \auth_shibboleth_link\lib::check_login();
         }
