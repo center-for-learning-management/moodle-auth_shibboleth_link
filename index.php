@@ -137,7 +137,7 @@ if (!empty($_SERVER[$pluginconfig->user_attribute])) {    // Shibboleth auto-log
                     'type' => 'success',
                     'content' => get_string('auth:warning:userreplaced', 'auth_shibboleth_link'),
                 );
-            } else {
+            } elseif ($user->deleted == 1) {
                 // Show an error that the linked account has gone.
                 $DB->delete_records('auth_shibboleth_link', array('id' => $link->id));
                 unset($link);
