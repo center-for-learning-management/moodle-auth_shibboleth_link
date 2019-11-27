@@ -19,11 +19,17 @@
     {{> auth_shibboleth_link/alert}}
 {{/msgs}}
 
+{{^asklinkorcreate}}
+    <a href="{{wwwroot}}/my" class="btn btn-primary btn-block">
+        {{#str}} ok {{/str}}
+    </a>
+{{/asklinkorcreate}}
+
+{{#asklinkorcreate}}
 {{#userdata}}
     <h3>{{#str}} auth:shibboleth:welcome, auth_shibboleth_link {{/str}}, {{firstname}} {{lastname}}</h3>
     <p>{{#str}} auth:shibboleth:welcome:question, auth_shibboleth_link {{/str}}</p>
 {{/userdata}}
-
 <table border="0" class="generaltable">
     <tbody>
         {{#isloggedin}}
@@ -60,3 +66,4 @@
         </tr>
     </tbody>
 </table>
+{{/asklinkorcreate}}

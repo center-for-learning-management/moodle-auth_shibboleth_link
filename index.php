@@ -122,45 +122,48 @@ if (empty($pluginconfig->user_attribute)) {
 if (!empty($_SERVER[$pluginconfig->user_attribute])) {    // Shibboleth auto-login
     $idpparams = \auth_shibboleth_link\lib::link_data_from_server();
     $link = \auth_shibboleth_link\lib::link_get($idpparams);
+    $asklinkorcreate = true; // Triggers if user has a decision to link account.
     $msgs = array();
     if (!empty($link->userid)) {
         \auth_shibboleth_link\lib::link_log_used($link);
 
         $user = core_user::get_user($link->userid, '*', IGNORE_MISSING);
 
-        // We can only check to remove the user_link if this is not a shibboleth_link-account.
-        if ($user->auth != 'shibboleth') {
-            if ($replacelink === 1) {
+        if ($replacelink === 1) {
+            if ($user->auth == 'shibboleth') {
+                // Sorry we can not do this!
+                $msgs[] = array(
+                    'type' => 'danger',
+                    'content' => get_string('auth:warning:userreplacenotallowed', 'auth_shibboleth_link'),
+                );
+                $asklinkorcreate = false;
+            } else {
                 $DB->delete_records('auth_shibboleth_link', array('id' => $link->id));
                 unset($link);
                 $msgs[] = array(
                     'type' => 'success',
                     'content' => get_string('auth:warning:userreplaced', 'auth_shibboleth_link'),
                 );
-            } elseif ($user->deleted == 1) {
-                // Show an error that the linked account has gone.
-                $DB->delete_records('auth_shibboleth_link', array('id' => $link->id));
-                unset($link);
-                $msgs[] = array(
-                    'type' => 'danger',
-                    'content' => get_string('auth:warning:usergone', 'auth_shibboleth_link'),
-                );
             }
-        } elseif ($replacelink === 1) {
+        }
+        if ($user->deleted == 1) {
+            // Show an error that the linked account has gone.
+            $DB->delete_records('auth_shibboleth_link', array('id' => $link->id));
+            unset($link);
             $msgs[] = array(
                 'type' => 'danger',
-                'content' => get_string('auth:warning:userreplacenotallowed', 'auth_shibboleth_link'),
+                'content' => get_string('auth:warning:usergone', 'auth_shibboleth_link'),
             );
         }
 
         if (!empty($user->id) && $user->id == $link->userid && $user->deleted == 0) {
             complete_user_login($user);
-            \auth_shibboleth_link\lib::check_login();
+            \auth_shibboleth_link\lib::check_login(count($msgs) == 0);
         }
     } else {
         // Normally this should not happen.
         // We check here if there is already a shibboleth_link-account with that username.
-        $user = $DB->get_record('user', array('auth' => 'shibboleth_link', 'deleted' => 0, 'username' => $idpparams['idpusername']));
+        $user = $DB->get_record('user', array('auth' => 'shibboleth', 'deleted' => 0, 'username' => $idpparams['idpusername']));
         if (!empty($user->id) && $user->deleted == 0) {
             $user = core_user::get_user($user->id);
             complete_user_login($user);
@@ -176,12 +179,14 @@ if (!empty($_SERVER[$pluginconfig->user_attribute])) {    // Shibboleth auto-log
     $PAGE->set_title(get_string('auth:linkaccount', 'auth_shibboleth_link'));
     echo $OUTPUT->header();
     echo $OUTPUT->render_from_template('auth_shibboleth_link/link_or_create', array(
+        'asklinkorcreate' => $asklinkorcreate,
         'datahash' => \auth_shibboleth_link\lib::datahash($idpparams),
         'idpusername' => $idpparams['idpusername'],
         'isloggedin' => (isloggedin() && !isguestuser($USER)) ? 1 : 0,
         'msgs' => $msgs,
         'userdata' => array($idpparams['userinfo']),
         'userfullname' => \fullname($USER),
+        'wwwroot' => $CFG->wwwroot,
     ));
     echo $OUTPUT->footer();
 

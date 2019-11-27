@@ -60,16 +60,17 @@
     }
 }}
 
-<div class="my-1 my-sm-5"></div>
 <div class="container">
     <div class="card">
+        {{#showheading}}
         <h2 class="card-header">
             {{#loginname}}{{.}}{{/loginname}}
             {{^loginname}}{{#str}}auth_shibboleth_login_long, auth_shibboleth{{/str}}{{/loginname}}
         </h2>
+        {{/showheading}}
         <div class="card-body">
             <div class="row justify-content-center ml-1 mr-1 mb-1">
-                <div class="col-md-5">
+                <div class="_col-md-5">
                     <form action="{{loginurl}}" method="post" id="login">
                         <div class="form-group">
                             <label for="idp">{{#str}}auth_shibboleth_select_organization, auth_shibboleth{{/str}}</label>

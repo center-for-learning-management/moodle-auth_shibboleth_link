@@ -1,10 +1,10 @@
 <?php
 
 // Mainly taken from auth/shibboleth/login.php
-
 require_once("../../config.php");
 require_once($CFG->dirroot."/auth/shibboleth/auth.php");
 
+$embed = optional_param('embed', 0, PARAM_INT);
 $idp = optional_param('idp', null, PARAM_RAW);
 $replacelink = optional_param('replacelink', 0, PARAM_BOOL);
 
@@ -63,7 +63,7 @@ $PAGE->set_title("$site->fullname: $loginsite");
 $PAGE->set_heading($site->fullname);
 $PAGE->set_pagelayout('login');
 
-echo $OUTPUT->header();
+if (empty($embed)) echo $OUTPUT->header();
 
 /*
 if (isloggedin() and !isguestuser()) {
@@ -117,16 +117,19 @@ if (isloggedin() and !isguestuser()) {
         'guestloginurl' => new moodle_url('/login/index.php'),
         'idps' => $idps,
         'instructions' => $instructions,
-        'loginname' => $config->login_name ?? null,
+        'loginname' => 'edu.IDAM',
+        //'loginname' => $config->login_name ?? null,
         'logintoken' => \core\session\manager::get_login_token(),
         'loginurl' => new moodle_url('/auth/shibboleth_link/login.php'),
         'showinstructions' => $showinstructions,
+        'showheading' => (empty($embed)) ? 1 : 0,
+        'showmini' => (defined('shibboleth_link_internal')) ? 1 : 0,
         'signupurl' => new moodle_url('/login/signup.php'),
-        'isvalid' => $isvalid
+        'isvalid' => $isvalid,
+        'wwwroot' => $CFG->wwwroot,
     ];
 
     // Render the login form.
     echo $OUTPUT->render_from_template('auth_shibboleth_link/login_form', $templatedata);
 //}
-
-echo $OUTPUT->footer();
+if (empty($embed)) echo $OUTPUT->footer();
