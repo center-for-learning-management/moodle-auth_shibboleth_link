@@ -7,8 +7,8 @@
     <TABLE NAME="auth_shibboleth_link" COMMENT="Link shibboleth users to moodle users">
         <FIELDS>
             <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true"/>
-            <FIELD NAME="idp" TYPE="char" LENGTH="255" NOTNULL="true" COMMENT="The identity provider id" />
-            <FIELD NAME="idpusername" TYPE="char" LENGTH="255" NOTNULL="true" COMMENT="The username from the identity provider id" />
+            <FIELD NAME="idp" TYPE="char" LENGTH="255" NOTNULL="true" COMMENT="The identity provider id" SEQUENCE="false" />
+            <FIELD NAME="idpusername" TYPE="char" LENGTH="255" NOTNULL="true" COMMENT="The username from the identity provider id" SEQUENCE="false" />
             <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" COMMENT="The moodle userid" />
             <FIELD NAME="lastseen" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" />
             <FIELD NAME="created" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" />
@@ -16,6 +16,9 @@
         <KEYS>
             <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Primary key for auth_shibboleth_link"/>
         </KEYS>
+        <INDEXES>
+            <INDEX NAME="idpdata" UNIQUE="true" FIELDS="idp, idpusername"/>
+        </INDEXES>
     </TABLE>
 </TABLES>
 </XMLDB>

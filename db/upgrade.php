@@ -27,5 +27,19 @@ function xmldb_auth_shibboleth_link_upgrade($oldversion=0) {
     global $DB;
     $dbman = $DB->get_manager();
 
+    if ($oldversion < 2019112800) {
+        // Define index idpdata (unique) to be added to auth_shibboleth_link.
+        $table = new xmldb_table('auth_shibboleth_link');
+        $index = new xmldb_index('idpdata', XMLDB_INDEX_UNIQUE, array('idp', 'idpusername'));
+
+        // Conditionally launch add index idpdata.
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        // Shibboleth_link savepoint reached.
+        upgrade_plugin_savepoint(true, 2019112800, 'auth', 'shibboleth_link');
+    }
+
     return true;
 }
