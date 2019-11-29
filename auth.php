@@ -50,6 +50,24 @@ class auth_plugin_shibboleth_link extends auth_plugin_shibboleth {
     }
 
     /**
+     * Hook for login page
+     *
+     */
+    function loginpage_hook() {
+        // We prevent a call to our parent class.
+        return;
+    }
+     /**
+     * Hook for logout page
+     *
+     */
+    function logoutpage_hook() {
+        // We prevent a call to our parent class,
+        // otherwise we would double the url-modification.
+        return;
+    }
+
+    /**
      * Will always return false, as direct login is not intended.
      *
      * @param string $username The username (with system magic quotes)
