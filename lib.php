@@ -58,6 +58,17 @@ class lib {
                 $urltogo = $CFG->wwwroot.'/my/';
             }
         }
+        $sessionkey = '';
+        if (isset($_SERVER['Shib-Session-ID'])) {
+            $sessionkey = $_SERVER['Shib-Session-ID'];
+        } else {
+            foreach ($_COOKIE AS $name => $value) {
+                if (preg_match('/_shibsession_/i', $name)) {
+                    $sessionkey = $value;
+                }
+            }
+        }
+        $SESSION->shibboleth_session_id = $sessionkey;
         if ($doredirect) \redirect($urltogo);
         else return $urltogo;
     }
