@@ -31,4 +31,22 @@ if ($ADMIN->fulltree) {
             PARAM_TEXT
         )
     );
+    $settings->add(
+        new admin_setting_configtext(
+            'auth_shibboleth_link/update_profile_always',
+            get_string('settings:update_profile_always', 'auth_shibboleth_link'),
+            get_string('settings:update_profile_always:description', 'auth_shibboleth_link'),
+            'institution,department',
+            PARAM_TEXT
+        )
+    );
+    $settings->add(
+        new admin_setting_configtext(
+            'auth_shibboleth_link/update_profile_shibbonly',
+            get_string('settings:update_profile_shibbonly', 'auth_shibboleth_link'),
+            get_string('settings:update_profile_shibbonly:description', 'auth_shibboleth_link'),
+            'firstname,lastname,email',
+            PARAM_TEXT
+        )
+    );
 }

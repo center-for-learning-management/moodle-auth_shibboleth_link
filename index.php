@@ -165,6 +165,17 @@ if (!empty($_SERVER[$pluginconfig->user_attribute])) {    // Shibboleth auto-log
         // We check here if there is already a shibboleth_link-account with that username.
         $user = $DB->get_record('user', array('auth' => 'shibboleth', 'deleted' => 0, 'username' => $idpparams['idpusername']));
         if (!empty($user->id) && $user->deleted == 0) {
+            $useparams = explode(',', get_config('auth_shibboleth_link', 'update_profile_always'));
+            if ($user->auth == 'shibboleth') {
+                $useparams = array_merge($useparams, explode(',', get_config('auth_shibboleth_link', 'update_profile_shibbonly')));
+            }
+            foreach($idpparams['userinfo'] AS $field => $value) {
+                if (in_array($field, $useparams)) {
+                    $user->{$field} = $value;
+                }
+            }
+            $DB->update_record('user', $user);
+
             $user = core_user::get_user($user->id);
             complete_user_login($user);
             \auth_shibboleth_link\lib::check_login();

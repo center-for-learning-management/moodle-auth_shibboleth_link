@@ -47,5 +47,9 @@ $string['privacy:metadata:db:idp'] = 'The Identity Provider';
 $string['privacy:metadata:db:idpusername'] = 'The username from the Identity Provider';
 $string['privacy:metadata:db:userid'] = 'Your userid within this Moodle-instance.';
 
+$string['settings:update_profile_always'] = 'Update always';
+$string['settings:update_profile_always:description'] = 'List profile fields that should always be updated from shibboleth. Delimit by comma.';
+$string['settings:update_profile_shibbonly'] = 'Update Shibb Only';
+$string['settings:update_profile_shibbonly:description'] = 'List profile fields that should only be updated for shibboleth accounts. Delimit by comma.';
 $string['settings:loginpath'] = 'Login Path';
 $string['settings:loginpath:description'] = 'Login Path that Shibboleth uses to launch the authentication';
