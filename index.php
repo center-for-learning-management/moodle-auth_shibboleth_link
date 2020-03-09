@@ -5,7 +5,7 @@
 // Designed to be redirected from moodle/login/index.php
 
 require('../../config.php');
-require_once($CFG->dirroot . '/auth/shibboleth_link/lib.php');
+require_once($CFG->dirroot . '/auth/shibboleth_link/classes/lib.php');
 
 $datahash = optional_param('datahash', '', PARAM_RAW);
 $linkorcreate = optional_param('linkorcreate', 0, PARAM_INT);
