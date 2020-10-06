@@ -47,6 +47,8 @@ $string['privacy:metadata:db:idp'] = 'The Identity Provider';
 $string['privacy:metadata:db:idpusername'] = 'The username from the Identity Provider';
 $string['privacy:metadata:db:userid'] = 'Your userid within this Moodle-instance.';
 
+$string['settings:hooks'] = 'Hooks';
+$string['settings:hooks:description'] = 'If you have other plugins that rely on certain profile data granted by Shibboleth, you can list php-files here as a relative path to the dirroot. Delimit your list with ";".';
 $string['settings:update_profile_always'] = 'Update always';
 $string['settings:update_profile_always:description'] = 'List profile fields that should always be updated from shibboleth. Delimit by comma.';
 $string['settings:update_profile_shibbonly'] = 'Update Shibb Only';

@@ -47,6 +47,8 @@ $string['privacy:metadata:db:idp'] = 'The Identity Provider';
 $string['privacy:metadata:db:idpusername'] = 'Der Benutzername vom Identity Provider';
 $string['privacy:metadata:db:userid'] = 'Die Benutzer-ID in diesem Moodle.';
 
+$string['settings:hooks'] = 'Hooks';
+$string['settings:hooks:description'] = 'Falls Sie andere Plugins verwenden, die auf Basis von Shibboleth-Profildaten Funktionen ausführen sollen, können Sie die PHP-Dateien als relativem Pfad zum dirroot angeben. Trennen Sie mehrere Dateien mit ";".';
 $string['settings:update_profile_always'] = 'Immer aktualisieren';
 $string['settings:update_profile_always:description'] = 'Listen Sie hier Profilfelder, die immer aktualisiert werden sollen. Trennen Sie einzelne Einträge mit einem Beistrich.';
 $string['settings:update_profile_shibbonly'] = 'Nur Shibb aktualisieren';

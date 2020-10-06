@@ -32,6 +32,13 @@ class lib {
 
     private static $datahash = '';
 
+    public static function check_hooks() {
+        global $CFG;
+        $hooks = explode(';', get_config('auth_shibboleth_link', 'hooks'));
+        foreach ($hooks as $hook) {
+            require_once($CFG->dirroot . '/' . $hook);
+        }
+    }
     /**
      * Check status after complete_user_login
      * @param doredirect true if we should do the redirect, false if we just return the url.
