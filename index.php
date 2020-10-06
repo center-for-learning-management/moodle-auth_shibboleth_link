@@ -32,7 +32,6 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
                     complete_user_login($user);
                     \auth_shibboleth_link\lib::link_store();
                     \auth_shibboleth_link\lib::check_login();
-                    \auth_shibboleth_link\lib::check_hooks();
                     echo $OUTPUT->header();
                     echo $OUTPUT->render_from_template('auth_shibboleth_link/alert', array(
                         'content' => get_string('auth:createaccount:success', 'auth_shibboleth_link'),
@@ -62,7 +61,6 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
                     complete_user_login($user);
                     \auth_shibboleth_link\lib::link_store($user);
                     $urltogo = \auth_shibboleth_link\lib::check_login(false);
-                    \auth_shibboleth_link\lib::check_hooks();
                     redirect($urltogo, 100, get_string('auth:createaccount:success', 'auth_shibboleth_link'), \core\output\notification::NOTIFY_SUCCESS);
                     echo $OUTPUT->header();
                     echo $OUTPUT->render_from_template('auth_shibboleth_link/alert', array(
@@ -88,7 +86,6 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
                 \auth_shibboleth_link\lib::link_store();
                 // Check user status and redirect.
                 \auth_shibboleth_link\lib::check_login();
-                \auth_shibboleth_link\lib::check_hooks();
             } else {
                 // We logged out in the meanwhile. Go to login page.
                 $SESSION->wantsurl = $CFG->wwwroot . '/auth/shibboleth_link/index.php?datahash=' . $datahash . '&linkorcreate=' . \auth_shibboleth_link\lib::$ACTION_LINK_CURRENT;

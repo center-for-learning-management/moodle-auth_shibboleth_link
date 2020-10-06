@@ -34,10 +34,14 @@ class lib {
 
     public static function check_hooks() {
         global $CFG;
+        $idpparams = \auth_shibboleth_link\lib::link_data_from_cache();
         $hooks = explode(';', get_config('auth_shibboleth_link', 'hooks'));
         foreach ($hooks as $hook) {
-            require_once($CFG->dirroot . '/' . $hook);
+            if (!empty($hook) && file_exists($CFG->dirroot . '/' . $hook)) {
+                require_once($CFG->dirroot . '/' . $hook);
+            }
         }
+
     }
     /**
      * Check status after complete_user_login
@@ -46,6 +50,7 @@ class lib {
      */
     public static function check_login($doredirect = true) {
         global $CFG, $SESSION, $USER;
+        self::check_hooks();
         if (\user_not_fully_set_up($USER, true)) {
             $urltogo = $CFG->wwwroot.'/user/edit.php?id='.$USER->id.'&amp;course='.SITEID;
             // We don't delete $SESSION->wantsurl yet, so we get there later
@@ -107,11 +112,18 @@ class lib {
         $pluginconfig   = \get_config('auth_shibboleth');
         $shibbolethauth = \get_auth_plugin('shibboleth');
 
-        return array(
+        $ar = array(
             'idp' => $_SERVER['Shib-Identity-Provider'],
             'idpusername' => strtolower($_SERVER[$pluginconfig->user_attribute]),
             'userinfo' => $shibbolethauth->get_userinfo(strtolower($_SERVER[$pluginconfig->user_attribute])),
         );
+        // Attach all info from $_SERVER in case we need it later.
+        foreach ($_SERVER as $key => $value) {
+            if (empty($ar['userinfo'][$key])) {
+                $ar['userinfo'][$key] = $value;
+            }
+        }
+        return $ar;
     }
     /**
      * Stores idpparams to cache.
