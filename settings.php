@@ -49,4 +49,13 @@ if ($ADMIN->fulltree) {
             PARAM_TEXT
         )
     );
+    $settings->add(
+        new admin_setting_configtext(
+            'auth_shibboleth_link/hooks',
+            get_string('settings:hooks', 'auth_shibboleth_link'),
+            get_string('settings:hooks:description', 'auth_shibboleth_link'),
+            '',
+            PARAM_TEXT
+        )
+    );
 }

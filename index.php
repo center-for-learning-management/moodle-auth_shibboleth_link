@@ -121,6 +121,8 @@ if (empty($pluginconfig->user_attribute)) {
 /// If we can find the Shibboleth attribute, save it in session and return to main login page
 if (!empty($_SERVER[$pluginconfig->user_attribute])) {    // Shibboleth auto-login
     $idpparams = \auth_shibboleth_link\lib::link_data_from_server();
+    // immediately store data to cache.
+    \auth_shibboleth_link\lib::link_data_store_cache($idpparams);
     $link = \auth_shibboleth_link\lib::link_get($idpparams);
     $asklinkorcreate = true; // Triggers if user has a decision to link account.
     $msgs = array();
