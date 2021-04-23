@@ -53,6 +53,7 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
                 require_once($CFG->dirroot . '/user/lib.php');
                 $idpparams['userinfo']['confirmed'] = 1;
                 $idpparams['userinfo']['mnethostid'] = 1;
+                $idpparams['userinfo']['username'] = strtolower($idpparams['userinfo']['username']);
                 $userid = \user_create_user($idpparams['userinfo']);
                 if (!empty($userid)) {
                     $user = core_user::get_user($userid, '*', IGNORE_MISSING);
