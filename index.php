@@ -62,7 +62,7 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
                     complete_user_login($user);
                     \auth_shibboleth_link\lib::link_store($user);
                     $urltogo = \auth_shibboleth_link\lib::check_login(false);
-                    redirect($urltogo, get_string('auth:createaccount:success', 'auth_shibboleth_link'), \core\output\notification::NOTIFY_SUCCESS);
+                    redirect($urltogo, get_string('auth:createaccount:success', 'auth_shibboleth_link'), 0, \core\output\notification::NOTIFY_SUCCESS);
                     echo $OUTPUT->header();
                     echo $OUTPUT->render_from_template('auth_shibboleth_link/alert', array(
                         'content' => get_string('auth:createaccount:success', 'auth_shibboleth_link'),
