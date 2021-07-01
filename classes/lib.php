@@ -142,8 +142,20 @@ class lib {
      */
     public static function link_get($idpparams) {
         global $DB;
-        $link = $DB->get_record('auth_shibboleth_link', array('idp' => $idpparams['idp'], 'idpusername' => $idpparams['idpusername']));
-        return $link;
+        $sql = "SELECT *
+                    FROM {auth_shibboleth_link}
+                    WHERE idp = ?
+                        AND (
+                            idpusername = ?
+                            OR
+                            idpusername = ?
+                        )";
+        $dbparams = [
+            $idpparams['idp'],
+            $idpparams['idpusername'],
+            ltrim($idpparams['idpusername'], '0')
+        ];
+        return $DB->get_record_sql($sql, $dbparams);
     }
     /**
      * Sets the used time of a link.
