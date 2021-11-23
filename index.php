@@ -57,7 +57,7 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
                 $userid = \user_create_user($idpparams['userinfo']);
                 if (!empty($userid)) {
                     $user = core_user::get_user($userid, '*', IGNORE_MISSING);
-                    $user->auth = 'shibboleth';
+                    $user->auth = 'manual';
                     $DB->update_record('user', $user);
                     complete_user_login($user);
                     \auth_shibboleth_link\lib::link_store($user);
