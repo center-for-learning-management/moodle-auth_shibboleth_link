@@ -23,6 +23,7 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
     $link = \auth_shibboleth_link\lib::link_get($idpparams);
     switch ($linkorcreate) {
         case \auth_shibboleth_link\lib::$ACTION_CREATE: // == 1
+            die('create todo');
             // Test if a user with that username already exists.
             $testuser = $DB->get_record('user', array('deleted' => 0, 'username' => $idpparams['idpusername']));
             if (!empty($testuser->id) && $testuser->deleted == 0) {
@@ -164,25 +165,27 @@ if (!empty($_SERVER[$pluginconfig->user_attribute])) {    // Shibboleth auto-log
             \auth_shibboleth_link\lib::check_login(count($msgs) == 0);
         }
     } else {
-        // Normally this should not happen.
         // We check here if there is already a shibboleth_link-account with that username.
-        $user = $DB->get_record('user', array('auth' => 'shibboleth', 'deleted' => 0, 'username' => $idpparams['idpusername']));
-        if (!empty($user->id) && $user->deleted == 0) {
-            $useparams = explode(',', get_config('auth_shibboleth_link', 'update_profile_always'));
-            if ($user->auth == 'shibboleth') {
-                $useparams = array_merge($useparams, explode(',', get_config('auth_shibboleth_link', 'update_profile_shibbonly')));
-            }
-            foreach ($idpparams['userinfo'] as $field => $value) {
-                if (in_array($field, $useparams)) {
-                    $user->{$field} = $value;
-                }
-            }
-            $DB->update_record('user', $user);
-
-            $user = core_user::get_user($user->id);
-            complete_user_login($user);
-            \auth_shibboleth_link\lib::check_login();
-        }
+        // $user = $DB->get_record_select('user',
+        //     "auth='shibboleth' AND deleted=0 AND ".$DB->sql_like('username', '?'),
+        // [$DB->sql_like_escape($idpparams['idpusername'])]);
+        //
+        // if (!empty($user->id) && $user->deleted == 0) {
+        //     $useparams = explode(',', get_config('auth_shibboleth_link', 'update_profile_always'));
+        //     if ($user->auth == 'shibboleth') {
+        //         $useparams = array_merge($useparams, explode(',', get_config('auth_shibboleth_link', 'update_profile_shibbonly')));
+        //     }
+        //     foreach($idpparams['userinfo'] AS $field => $value) {
+        //         if (in_array($field, $useparams)) {
+        //             $user->{$field} = $value;
+        //         }
+        //     }
+        //     $DB->update_record('user', $user);
+        //
+        //     $user = core_user::get_user($user->id);
+        //     complete_user_login($user);
+        //     \auth_shibboleth_link\lib::check_login();
+        // }
     }
 
     // If we are here then the login did not work. Either no user at all, or it has gone.

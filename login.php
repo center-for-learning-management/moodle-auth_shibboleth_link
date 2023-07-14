@@ -34,6 +34,16 @@ if (!empty($CFG->registerauth) or is_enabled_auth('none') or !empty($config->aut
 
 $idplist = get_idp_list($config->organization_selection);
 if (isset($idp)) {
+    if (!isset($idplist[$idp])) {
+        // ersten idp auswählen, der matcht
+        foreach ($idplist as $idpurl => $tmp) {
+            if (strpos($idpurl, $idp) !== false) {
+                $idp = $idpurl;
+                break;
+            }
+        }
+    }
+
     if (isset($idplist[$idp])) {
         set_saml_cookie($idp);
 
