@@ -23,38 +23,46 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
     $link = \auth_shibboleth_link\lib::link_get($idpparams);
     switch ($linkorcreate) {
         case \auth_shibboleth_link\lib::$ACTION_CREATE: // == 1
-            die('create todo');
-            // Test if a user with that username already exists.
-            $testuser = $DB->get_record('user', array('deleted' => 0, 'username' => $idpparams['idpusername']));
-            if (!empty($testuser->id) && $testuser->deleted == 0) {
+            // Test if a user with that email already exists.
+            $email = $idpparams['userinfo']['email'];
+            if (!$email) {
+                // TODO: email not set -> random
+                die('no email');
+            }
+
+            $testuser = $DB->get_record_select('user', 'deleted=0 AND username=? OR email=?', [$email, $email]);
+            if ($testuser && $testuser->deleted == 0) {
                 // If that user is a shibboleth_link-account we use it.
-                if ($testuser->auth == 'shibboleth') {
-                    $user = core_user::get_user($testuser->id);
-                    complete_user_login($user);
-                    \auth_shibboleth_link\lib::link_store();
-                    \auth_shibboleth_link\lib::check_login();
-                    echo $OUTPUT->header();
-                    echo $OUTPUT->render_from_template('auth_shibboleth_link/alert', array(
-                        'content' => get_string('auth:createaccount:success', 'auth_shibboleth_link'),
-                        'type' => 'success',
-                        'url' => $CFG->wwwroot . '/my',
-                    ));
-                    echo $OUTPUT->footer();
-                } else {
-                    echo $OUTPUT->header();
-                    echo $OUTPUT->render_from_template('auth_shibboleth_link/alert', array(
-                        'content' => get_string('auth:createaccount:userexists', 'auth_shibboleth_link'),
-                        'type' => 'warning',
-                        'url' => $CFG->wwwroot . '/auth/shibboleth_link/index.php?datahash=' . $datahash . '&linkorcreate=' . \auth_shibboleth_link\lib::$ACTION_LINK_OTHER,
-                    ));
-                    echo $OUTPUT->footer();
-                }
+                // if ($testuser->auth == 'shibboleth') {
+                //     $user = core_user::get_user($testuser->id);
+                //     complete_user_login($user);
+                //     \auth_shibboleth_link\lib::link_store();
+                //     \auth_shibboleth_link\lib::check_login();
+                //     echo $OUTPUT->header();
+                //     echo $OUTPUT->render_from_template('auth_shibboleth_link/alert', array(
+                //         'content' => get_string('auth:createaccount:success', 'auth_shibboleth_link'),
+                //         'type' => 'success',
+                //         'url' => $CFG->wwwroot . '/my',
+                //     ));
+                //     echo $OUTPUT->footer();
+                // } else {
+                echo $OUTPUT->header();
+                echo $OUTPUT->render_from_template('auth_shibboleth_link/alert', array(
+                    'content' => get_string('auth:createaccount:userexists', 'auth_shibboleth_link'),
+                    'type' => 'warning',
+                    'url' => $CFG->wwwroot . '/auth/shibboleth_link/index.php?datahash=' . $datahash . '&linkorcreate=' . \auth_shibboleth_link\lib::$ACTION_LINK_OTHER,
+                ));
+                echo $OUTPUT->footer();
+                // }
             } else {
                 // Create a user with the information from shibboleth.
                 require_once($CFG->dirroot . '/user/lib.php');
+                $idpparams['userinfo']['username'] = $email;
+                $idpparams['userinfo']['email'] = $email;
                 $idpparams['userinfo']['confirmed'] = 1;
                 $idpparams['userinfo']['mnethostid'] = 1;
                 $idpparams['userinfo']['username'] = strtolower($idpparams['userinfo']['username']);
+
                 $userid = \user_create_user($idpparams['userinfo']);
                 if (!empty($userid)) {
                     $user = core_user::get_user($userid, '*', IGNORE_MISSING);
