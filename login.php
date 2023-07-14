@@ -2,7 +2,7 @@
 
 // Mainly taken from auth/shibboleth/login.php
 require_once("../../config.php");
-require_once($CFG->dirroot."/auth/shibboleth/auth.php");
+require_once($CFG->dirroot . "/auth/shibboleth/auth.php");
 
 $embed = optional_param('embed', 0, PARAM_INT);
 $idp = optional_param('idp', null, PARAM_RAW);
@@ -63,7 +63,8 @@ $PAGE->set_title("$site->fullname: $loginsite");
 $PAGE->set_heading($site->fullname);
 $PAGE->set_pagelayout('login');
 
-if (empty($embed)) echo $OUTPUT->header();
+if (empty($embed))
+    echo $OUTPUT->header();
 
 /*
 if (isloggedin() and !isguestuser()) {
@@ -77,59 +78,60 @@ if (isloggedin() and !isguestuser()) {
     echo $OUTPUT->box_end();
 } else {
 */
-    // Print login page.
-    $selectedidp = '-';
-    if (isset($_COOKIE['_saml_idp'])) {
-        $idpcookie = generate_cookie_array($_COOKIE['_saml_idp']);
-        do {
-            $selectedidp = array_pop($idpcookie);
-        } while (!isset($idplist[$selectedidp]) && count($idpcookie) > 0);
-    }
+// Print login page.
+$selectedidp = '-';
+if (isset($_COOKIE['_saml_idp'])) {
+    $idpcookie = generate_cookie_array($_COOKIE['_saml_idp']);
+    do {
+        $selectedidp = array_pop($idpcookie);
+    } while (!isset($idplist[$selectedidp]) && count($idpcookie) > 0);
+}
 
-    $idps = [];
-    foreach ($idplist as $value => $data) {
-        $name = reset($data);
-        $selected = $value === $selectedidp;
-        $idps[] = (object)[
-            'name' => $name,
-            'value' => $value,
-            'selected' => $selected
-        ];
-    }
-
-    // Whether the user can sign up.
-    $cansignup = !empty($CFG->registerauth);
-    // Default instructions.
-    $instructions = format_text($config->auth_instructions);
-    if (is_enabled_auth('none')) {
-        $instructions = get_string('loginstepsnone');
-    } else if ($cansignup) {
-        if ($CFG->registerauth === 'email' && empty($instructions)) {
-            $instructions = get_string('loginsteps');
-        }
-    }
-
-    // Build the template context data.
-    $templatedata = (object)[
-        'adminemail' => get_admin()->email,
-        'cansignup' => $cansignup,
-        'guestlogin' => $CFG->guestloginbutton,
-        'guestloginurl' => new moodle_url('/login/index.php'),
-        'idps' => $idps,
-        'instructions' => $instructions,
-        'loginname' => 'edu.IDAM',
-        //'loginname' => $config->login_name ?? null,
-        'logintoken' => \core\session\manager::get_login_token(),
-        'loginurl' => new moodle_url('/auth/shibboleth_link/login.php'),
-        'showinstructions' => $showinstructions,
-        'showheading' => (empty($embed)) ? 1 : 0,
-        'showmini' => (defined('shibboleth_link_internal')) ? 1 : 0,
-        'signupurl' => new moodle_url('/login/signup.php'),
-        'isvalid' => $isvalid,
-        'wwwroot' => $CFG->wwwroot,
+$idps = [];
+foreach ($idplist as $value => $data) {
+    $name = reset($data);
+    $selected = $value === $selectedidp;
+    $idps[] = (object)[
+        'name' => $name,
+        'value' => $value,
+        'selected' => $selected,
     ];
+}
 
-    // Render the login form.
-    echo $OUTPUT->render_from_template('auth_shibboleth_link/login_form', $templatedata);
+// Whether the user can sign up.
+$cansignup = !empty($CFG->registerauth);
+// Default instructions.
+$instructions = format_text($config->auth_instructions);
+if (is_enabled_auth('none')) {
+    $instructions = get_string('loginstepsnone');
+} else if ($cansignup) {
+    if ($CFG->registerauth === 'email' && empty($instructions)) {
+        $instructions = get_string('loginsteps');
+    }
+}
+
+// Build the template context data.
+$templatedata = (object)[
+    'adminemail' => get_admin()->email,
+    'cansignup' => $cansignup,
+    'guestlogin' => $CFG->guestloginbutton,
+    'guestloginurl' => new moodle_url('/login/index.php'),
+    'idps' => $idps,
+    'instructions' => $instructions,
+    'loginname' => 'edu.IDAM',
+    //'loginname' => $config->login_name ?? null,
+    'logintoken' => \core\session\manager::get_login_token(),
+    'loginurl' => new moodle_url('/auth/shibboleth_link/login.php'),
+    'showinstructions' => $showinstructions,
+    'showheading' => (empty($embed)) ? 1 : 0,
+    'showmini' => (defined('shibboleth_link_internal')) ? 1 : 0,
+    'signupurl' => new moodle_url('/login/signup.php'),
+    'isvalid' => $isvalid,
+    'wwwroot' => $CFG->wwwroot,
+];
+
+// Render the login form.
+echo $OUTPUT->render_from_template('auth_shibboleth_link/login_form', $templatedata);
 //}
-if (empty($embed)) echo $OUTPUT->footer();
+if (empty($embed))
+    echo $OUTPUT->footer();

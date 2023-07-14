@@ -18,7 +18,7 @@
  * @package    auth_shibboleth_link
  * @copyright  2019 Zentrum für Lernmanagement (www.lernmangement.at)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
-*/
+ */
 
 defined('MOODLE_INTERNAL') || die;
 if ($ADMIN->fulltree) {

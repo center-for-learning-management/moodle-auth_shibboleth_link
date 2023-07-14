@@ -23,8 +23,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->libdir.'/authlib.php');
-require_once($CFG->dirroot.'/auth/shibboleth/auth.php');
+require_once($CFG->libdir . '/authlib.php');
+require_once($CFG->dirroot . '/auth/shibboleth/auth.php');
 
 /**
  * Shibboleth_link authentication plugin.
@@ -57,7 +57,8 @@ class auth_plugin_shibboleth_link extends auth_plugin_shibboleth {
         // We prevent a call to our parent class.
         return;
     }
-     /**
+
+    /**
      * Hook for logout page
      *
      */
@@ -75,7 +76,7 @@ class auth_plugin_shibboleth_link extends auth_plugin_shibboleth {
      * @return bool Authentication success or failure.
      */
     function user_login($username, $password) {
-       return false;
+        return false;
     }
 
 }

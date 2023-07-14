@@ -21,7 +21,7 @@ $PAGE->set_url('/auth/shibboleth_link/index.php', array('datahash' => $datahash,
 $idpparams = \auth_shibboleth_link\lib::link_data_from_cache();
 if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
     $link = \auth_shibboleth_link\lib::link_get($idpparams);
-    switch($linkorcreate) {
+    switch ($linkorcreate) {
         case \auth_shibboleth_link\lib::$ACTION_CREATE: // == 1
             // Test if a user with that username already exists.
             $testuser = $DB->get_record('user', array('deleted' => 0, 'username' => $idpparams['idpusername']));
@@ -80,7 +80,7 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
                     echo $OUTPUT->footer();
                 }
             }
-        break;
+            break;
         case \auth_shibboleth_link\lib::$ACTION_LINK_CURRENT: // == 3
             if (isloggedin() && !isguestuser()) {
                 // Link user.
@@ -93,7 +93,7 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
                 // Redirect to normal login.
                 redirect($CFG->wwwroot . '/login/index.php');
             }
-        break;
+            break;
         case \auth_shibboleth_link\lib::$ACTION_LINK_OTHER: // == 2
             // Capture wantsurl before the session is destroyed by logout.
             $wantsurl = $SESSION->wantsurl;
@@ -106,18 +106,18 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
             $SESSION->wantsurl = $CFG->wwwroot . '/auth/shibboleth_link/index.php?datahash=' . $datahash . '&linkorcreate=' . \auth_shibboleth_link\lib::$ACTION_LINK_CURRENT;
             // Redirect to normal login.
             redirect($CFG->wwwroot . '/login/index.php');
-        break;
+            break;
     }
     die();
 }
 
-$pluginconfig   = get_config('auth_shibboleth');
+$pluginconfig = get_config('auth_shibboleth');
 $shibbolethauth = get_auth_plugin('shibboleth');
 
 // Check whether Shibboleth is configured properly
 if (empty($pluginconfig->user_attribute)) {
     print_error('shib_not_set_up_error', 'auth_shibboleth');
- }
+}
 
 /// If we can find the Shibboleth attribute, save it in session and return to main login page
 if (!empty($_SERVER[$pluginconfig->user_attribute])) {    // Shibboleth auto-login
@@ -172,7 +172,7 @@ if (!empty($_SERVER[$pluginconfig->user_attribute])) {    // Shibboleth auto-log
             if ($user->auth == 'shibboleth') {
                 $useparams = array_merge($useparams, explode(',', get_config('auth_shibboleth_link', 'update_profile_shibbonly')));
             }
-            foreach($idpparams['userinfo'] AS $field => $value) {
+            foreach ($idpparams['userinfo'] as $field => $value) {
                 if (in_array($field, $useparams)) {
                     $user->{$field} = $value;
                 }
@@ -208,7 +208,7 @@ if (!empty($_SERVER[$pluginconfig->user_attribute])) {    // Shibboleth auto-log
 // If we can find any (user independent) Shibboleth attributes but no user
 // attributes we probably didn't receive any user attributes
 elseif (!empty($_SERVER['HTTP_SHIB_APPLICATION_ID']) || !empty($_SERVER['Shib-Application-ID'])) {
-    print_error('shib_no_attributes_error', 'auth_shibboleth' , '', '\''.$pluginconfig->user_attribute.'\', \''.$pluginconfig->field_map_firstname.'\', \''.$pluginconfig->field_map_lastname.'\' and \''.$pluginconfig->field_map_email.'\'');
+    print_error('shib_no_attributes_error', 'auth_shibboleth', '', '\'' . $pluginconfig->user_attribute . '\', \'' . $pluginconfig->field_map_firstname . '\', \'' . $pluginconfig->field_map_lastname . '\' and \'' . $pluginconfig->field_map_email . '\'');
 } else {
     print_error('shib_not_set_up_error', 'auth_shibboleth');
 }

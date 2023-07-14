@@ -9,10 +9,9 @@
 // - https://wiki.shibboleth.net/confluence/display/SHIB2/NativeSPNotify
 
 
-
 require_once("../../config.php");
 
-require_once($CFG->dirroot."/auth/shibboleth/auth.php");
+require_once($CFG->dirroot . "/auth/shibboleth/auth.php");
 
 $action = optional_param('action', '', PARAM_ALPHA);
 $redirect = optional_param('return', '', PARAM_URL);
@@ -45,7 +44,7 @@ if ($action == 'logout' && !empty($redirect)) {
 
     // Back channel logout.
     // Set SOAP header.
-    $server = new SoapServer($protocol.$_SERVER['HTTP_HOST'].$_SERVER['PHP_SELF'].'/LogoutNotification.wsdl');
+    $server = new SoapServer($protocol . $_SERVER['HTTP_HOST'] . $_SERVER['PHP_SELF'] . '/LogoutNotification.wsdl');
     $server->addFunction("LogoutNotification");
     $server->handle();
 
