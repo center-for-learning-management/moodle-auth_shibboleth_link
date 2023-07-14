@@ -26,8 +26,8 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
             // Test if a user with that email already exists.
             $email = $idpparams['userinfo']['email'];
             if (!$email) {
-                // TODO: email not set -> random
-                die('no email');
+                // TODO: email not set -> "pseudo" random
+                $email = floor((microtime(true)-1689000000)*1000).'@a.eduvidual.at';
             }
 
             $testuser = $DB->get_record_select('user', 'deleted=0 AND username=? OR email=?', [$email, $email]);
