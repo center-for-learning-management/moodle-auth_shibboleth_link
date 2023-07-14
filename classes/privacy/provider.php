@@ -22,13 +22,14 @@
  */
 
 namespace auth_shibboleth_link\privacy;
+
 use core_privacy\local\metadata\collection;
 
 defined('MOODLE_INTERNAL') || die;
 
 class provider implements \core_privacy\local\metadata\provider {
 
-    public static function get_metadata(collection $collection) : collection {
+    public static function get_metadata(collection $collection): collection {
         // Here you will add more items into the collection.
         $collection->add_database_table(
             'auth_shibboleth_link',
