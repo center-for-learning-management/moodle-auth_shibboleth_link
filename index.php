@@ -24,7 +24,7 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
     switch ($linkorcreate) {
         case \auth_shibboleth_link\lib::$ACTION_CREATE: // == 1
             // Test if a user with that email already exists.
-            $email = $idpparams['userinfo']['email'];
+            $email = strtolower($idpparams['userinfo']['email']);
             if (!$email) {
                 // TODO: email not set -> "pseudo" random
                 $email = floor((microtime(true)-1689000000)*1000).'@a.eduvidual.at';
