@@ -152,7 +152,27 @@ class lib {
     public static function link_get($idpparams) {
         global $DB;
 
-        // compsare idpusername case sensitive!
+        // fallback for old lowercase usernames
+        // also fallback to allow old pods idp, with lowercase bpk
+        if ($idpparams['idpusername'] !== strtolower($idpparams['idpusername'])) {
+            // compare idpusername case sensitive!
+            $idpusername_where = $DB->sql_like('idpusername', '?');
+
+            $sql = "UPDATE {auth_shibboleth_link}
+                        SET idpusername=?, idp=?
+                        WHERE (idp = ? OR idp='http://digitaleschuleprod.onmicrosoft.com/B2C_1A_signin_saml')
+                            AND {$idpusername_where}";
+            $dbparams = [
+                $idpparams['idpusername'],
+                $idpparams['idp'],
+                $idpparams['idp'],
+                $DB->sql_like_escape(strtolower($idpparams['idpusername'])),
+            ];
+
+            $DB->execute($sql, $dbparams);
+        }
+
+        // compare idpusername case sensitive!
         $idpusername_where = $DB->sql_like('idpusername', '?');
 
         $sql = "SELECT *
