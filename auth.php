@@ -79,4 +79,52 @@ class auth_plugin_shibboleth_link extends auth_plugin_shibboleth {
         return false;
     }
 
+    /**
+     * Return a list of identity providers to display on the login page.
+     * Kopiert von auth/shibboleth
+     *
+     * @param string $wantsurl The requested URL.
+     * @return array List of arrays with keys url, iconurl and name.
+     */
+    public function loginpage_idp_list($wantsurl) {
+        $config = get_config('auth_shibboleth');
+        $result = [];
+
+        // Before displaying the button check that Shibboleth is set-up correctly.
+        if (empty($config->user_attribute)) {
+            return $result;
+        }
+
+        /*
+        $url = new moodle_url('/auth/shibboleth/index.php');
+
+        if ($config->auth_logo) {
+            $iconurl = moodle_url::make_pluginfile_url(
+                context_system::instance()->id,
+                'auth_shibboleth',
+                'logo',
+                null,
+                null,
+                $config->auth_logo);
+        } else {
+            $iconurl = null;
+        }
+        */
+
+        $idps = explode("\n", get_config('auth_shibboleth', 'organization_selection'));
+        if (count($idps) > 0) {
+            $idpX = explode(",", $idps[0]);
+            $idp = trim($idpX[0]);
+        } else {
+            $idp = null;
+        }
+
+        $url = new moodle_url('/auth/shibboleth_link/login.php', ['idp' => $idp]);
+
+        $config->login_name = 'Bildungsportal';
+        $iconurl = new moodle_url('/local/eduvidual/pix/logo_bip-32x32.png');
+
+        $result[] = ['url' => $url, 'iconurl' => $iconurl, 'name' => $config->login_name];
+        return $result;
+    }
 }
