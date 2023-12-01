@@ -55,3 +55,11 @@ $string['settings:update_profile_shibbonly'] = 'Nur Shibb aktualisieren';
 $string['settings:update_profile_shibbonly:description'] = 'Listen Sie hier Profilfelder, die nur bei Shibboleth-Konten aktualisiert werden sollen.  Trennen Sie einzelne Einträge mit einem Beistrich.';
 $string['settings:loginpath'] = 'Login Pfad';
 $string['settings:loginpath:description'] = 'Der Loginpfad, mit dem Shibboleth aufgerufen wird, um die Authentifizierung zu starten.';
+
+$string['manage_linked_users'] = 'Verknüpfte Benutzer verwalten';
+$string['manage_linked_users:no_linked_users'] = 'Keine verknüpften Benutzer vorhanden!';
+$string['manage_linked_users:idp'] = 'Login Provider';
+$string['manage_linked_users:created'] = 'Erster Login';
+$string['manage_linked_users:lastseen'] = 'Letzter Login';
+$string['manage_linked_users:unlink'] ='Verknüpfung aufheben';
+$string['manage_linked_users:confirmunlink'] ='Verknüpfung wirklich aufheben?';

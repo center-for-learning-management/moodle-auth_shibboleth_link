@@ -1,0 +1,37 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+
+<table border="0" class="generaltable">
+    <thead>
+        <tr>
+            <th scope="col">{{#str}} manage_linked_users:idp, auth_shibboleth_link{{/str}}</th>
+            <th scope="col">{{#str}} manage_linked_users:created, auth_shibboleth_link{{/str}}</th>
+            <th scope="col">{{#str}} manage_linked_users:lastseen, auth_shibboleth_link{{/str}}</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {{#linked_users}}
+        <tr>
+            <td>{{idp}}</td>
+            <td>{{created}}</td>
+            <td>{{lastseen}}</td>
+            <td><a href="manage_linked_users.php?action=unlink&link_id={{id}}" onclick="return confirm('{{#str}} manage_linked_users:confirmunlink, auth_shibboleth_link{{/str}}');">{{#str}} manage_linked_users:unlink, auth_shibboleth_link{{/str}}</a></td>
+        </tr>
+        {{/linked_users}}
+    </tbody>
+</table>

@@ -21,10 +21,22 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die;
+defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2023120100;
-$plugin->requires = 2016052300;
-$plugin->component = 'auth_shibboleth_link';
-$plugin->release = '1.3 (2023120100)';
-$plugin->maturity = MATURITY_STABLE;
+/**
+ * Extend users profile
+ * @param \core_user\output\myprofile\tree $tree Tree object
+ * @param stdClass $user User object
+ * @param bool $iscurrentuser
+ * @param stdClass $course Course object
+ * @return bool
+ */
+function auth_shibboleth_link_myprofile_navigation($tree, $user, $iscurrentuser, $course) {
+    if ($iscurrentuser) {
+        // var_dump(get_class_methods($tree));
+        $category = $tree->categories['loginactivity'];
+
+        $node = new \core_user\output\myprofile\node('loginactivity', 'manage_linked_users', get_string('manage_linked_users', 'auth_shibboleth_link'), null, new \moodle_url('/auth/shibboleth_link/manage_linked_users.php'));
+        $category->add_node($node);
+    }
+}

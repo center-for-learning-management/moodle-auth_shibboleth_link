@@ -55,3 +55,11 @@ $string['settings:update_profile_shibbonly'] = 'Update Shibb Only';
 $string['settings:update_profile_shibbonly:description'] = 'List profile fields that should only be updated for shibboleth accounts. Delimit by comma.';
 $string['settings:loginpath'] = 'Login Path';
 $string['settings:loginpath:description'] = 'Login Path that Shibboleth uses to launch the authentication';
+
+$string['manage_linked_users'] = 'Manage linked users';
+$string['manage_linked_users:no_linked_users'] = 'No linked users found!';
+$string['manage_linked_users:idp'] = 'Login Provider';
+$string['manage_linked_users:created'] = 'First Login';
+$string['manage_linked_users:lastseen'] = 'Last Login';
+$string['manage_linked_users:unlink'] ='Remove linked user';
+$string['manage_linked_users:confirmunlink'] ='Really remove this linked user?';
