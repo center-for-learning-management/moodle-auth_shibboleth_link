@@ -18,9 +18,11 @@
 <table border="0" class="generaltable">
     <thead>
         <tr>
-            <th scope="col">{{#str}} manage_linked_users:idp, auth_shibboleth_link{{/str}}</th>
-            <th scope="col">{{#str}} manage_linked_users:created, auth_shibboleth_link{{/str}}</th>
-            <th scope="col">{{#str}} manage_linked_users:lastseen, auth_shibboleth_link{{/str}}</th>
+            <th scope="col">{{#str}} manage_linked_users:idp, auth_shibboleth_link {{/str}}</th>
+            <th scope="col">{{#str}} name {{/str}}</th>
+            <th scope="col">{{#str}} email {{/str}}</th>
+            <th scope="col">{{#str}} manage_linked_users:created, auth_shibboleth_link {{/str}}</th>
+            <th scope="col">{{#str}} manage_linked_users:lastseen, auth_shibboleth_link {{/str}}</th>
             <th></th>
         </tr>
     </thead>
@@ -28,6 +30,8 @@
         {{#linked_users}}
         <tr>
             <td>{{idp}}</td>
+            <td>{{idpfirstname}} {{idplastname}}</td>
+            <td>{{idpemail}}</td>
             <td>{{created}}</td>
             <td>{{lastseen}}</td>
             <td><a href="manage_linked_users.php?action=unlink&link_id={{id}}" onclick="return confirm('{{#str}} manage_linked_users:confirmunlink, auth_shibboleth_link{{/str}}');">{{#str}} manage_linked_users:unlink, auth_shibboleth_link{{/str}}</a></td>

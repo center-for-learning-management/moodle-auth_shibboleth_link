@@ -196,9 +196,12 @@ class lib {
      * Sets the used time of a link.
      * @param $link
      */
-    public static function link_log_used($link) {
+    public static function link_log_used($link, $idpparams) {
         global $DB;
         $link->lastseen = time();
+        $link->idpfirstname = $idpparams['userinfo']['firstname'] ?? $link->idpfirstname;
+        $link->idplastname = $idpparams['userinfo']['lastname'] ?? $link->idplastname;
+        $link->idpemail = $idpparams['userinfo']['email'] ?? $link->idpemail;
         $DB->update_record('auth_shibboleth_link', $link);
     }
 
@@ -218,14 +221,19 @@ class lib {
 
         if (!empty($link->id)) {
             $link->userid = $user->id;
-            $link->lastseen = time();
             $DB->update_record('auth_shibboleth_link', $link);
+
+            static::link_log_used($link, $idpparams);
+
             return $link->id;
         } else {
             $link = array(
                 'created' => time(),
                 'idp' => $idpparams['idp'],
                 'idpusername' => $idpparams['idpusername'],
+                'idpfirstname' => $idpparams['userinfo']['firstname'],
+                'idplastname' => $idpparams['userinfo']['lastname'],
+                'idpemail' => $idpparams['userinfo']['email'],
                 'lastseen' => time(),
                 'userid' => $user->id,
             );

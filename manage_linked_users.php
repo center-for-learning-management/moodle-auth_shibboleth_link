@@ -54,7 +54,6 @@ if (!$linked_users) {
 } else {
     echo $OUTPUT->render_from_template('auth_shibboleth_link/manage_linked_users', [
         'linked_users' => array_values(array_map(function($linked_user) {
-            $linked_user = clone $linked_user;
             $linked_user->idp = preg_replace('!/.*!', '', preg_replace('!^https?://!', '', $linked_user->idp));
             $linked_user->created = userdate($linked_user->created);
             $linked_user->lastseen = userdate($linked_user->lastseen);

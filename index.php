@@ -137,7 +137,7 @@ if (!empty($_SERVER[$pluginconfig->user_attribute])) {    // Shibboleth auto-log
     $asklinkorcreate = true; // Triggers if user has a decision to link account.
     $msgs = array();
     if (!empty($link->userid)) {
-        \auth_shibboleth_link\lib::link_log_used($link);
+        \auth_shibboleth_link\lib::link_log_used($link, $idpparams);
 
         $user = core_user::get_user($link->userid, '*', IGNORE_MISSING);
 

@@ -27,5 +27,35 @@ function xmldb_auth_shibboleth_link_upgrade($oldversion = 0) {
     global $DB;
     $dbman = $DB->get_manager();
 
+    if ($oldversion < 2023120400) {
+        // Define field idpfirstname to be added to auth_shibboleth_link.
+        $table = new xmldb_table('auth_shibboleth_link');
+        $field = new xmldb_field('idpfirstname', XMLDB_TYPE_CHAR, '255', null, null, null, null, 'idpusername');
+
+        // Conditionally launch add field idpfirstname.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field idplastname to be added to auth_shibboleth_link.
+        $field = new xmldb_field('idplastname', XMLDB_TYPE_CHAR, '255', null, null, null, null, 'idpfirstname');
+
+        // Conditionally launch add field idplastname.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field idpemail to be added to auth_shibboleth_link.
+        $field = new xmldb_field('idpemail', XMLDB_TYPE_CHAR, '255', null, null, null, null, 'idplastname');
+
+        // Conditionally launch add field idpemail.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Shibboleth_link savepoint reached.
+        upgrade_plugin_savepoint(true, 2023120400, 'auth', 'shibboleth_link');
+    }
+
     return true;
 }
