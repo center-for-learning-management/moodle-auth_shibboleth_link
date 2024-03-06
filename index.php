@@ -57,11 +57,11 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
             } else {
                 // Create a user with the information from shibboleth.
                 require_once($CFG->dirroot . '/user/lib.php');
-                $idpparams['userinfo']['username'] = $email;
                 $idpparams['userinfo']['email'] = $email;
                 $idpparams['userinfo']['confirmed'] = 1;
                 $idpparams['userinfo']['mnethostid'] = 1;
-                $idpparams['userinfo']['username'] = strtolower($idpparams['userinfo']['username']);
+                $idpparams['userinfo']['username'] = strtolower($email);
+                $idpparams['userinfo']['password'] = generate_password();
 
                 $userid = \user_create_user($idpparams['userinfo']);
                 if (!empty($userid)) {
