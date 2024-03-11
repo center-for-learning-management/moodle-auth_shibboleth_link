@@ -34,7 +34,7 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
 
             if ($testuser && $testuser->deleted == 0) {
                 // user already exists, use emailadress with firstname suffix
-                $email = str_replace('@', '+'.strtolower($idpparams['userinfo']['firstname']).'@', $email);
+                $email = str_replace('@', '+' . strtolower($idpparams['userinfo']['firstname']) . '@', $email);
 
                 $testuser = $DB->get_record_select('user', 'deleted=0 AND username=?', [$email]);
                 if ($testuser) {

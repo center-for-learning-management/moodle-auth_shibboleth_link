@@ -23,7 +23,7 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-$plugin->version = 2023120400;
+$plugin->version = 2024031100;
 $plugin->requires = 2016052300;
 $plugin->component = 'auth_shibboleth_link';
 $plugin->release = '1.3 (2023120100)';

@@ -62,5 +62,5 @@ $string['manage_linked_users:no_linked_users'] = 'Keine verknüpften Benutzer vo
 $string['manage_linked_users:idp'] = 'Login Provider';
 $string['manage_linked_users:created'] = 'Erster Login';
 $string['manage_linked_users:lastseen'] = 'Letzter Login';
-$string['manage_linked_users:unlink'] ='Verknüpfung aufheben';
-$string['manage_linked_users:confirmunlink'] ='Verknüpfung wirklich aufheben?';
+$string['manage_linked_users:unlink'] = 'Verknüpfung aufheben';
+$string['manage_linked_users:confirmunlink'] = 'Verknüpfung wirklich aufheben?';

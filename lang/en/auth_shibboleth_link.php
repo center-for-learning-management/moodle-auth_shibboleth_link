@@ -62,5 +62,5 @@ $string['manage_linked_users:no_linked_users'] = 'No linked users found!';
 $string['manage_linked_users:idp'] = 'Login Provider';
 $string['manage_linked_users:created'] = 'First Login';
 $string['manage_linked_users:lastseen'] = 'Last Login';
-$string['manage_linked_users:unlink'] ='Remove linked user';
-$string['manage_linked_users:confirmunlink'] ='Really remove this linked user?';
+$string['manage_linked_users:unlink'] = 'Remove linked user';
+$string['manage_linked_users:confirmunlink'] = 'Really remove this linked user?';
