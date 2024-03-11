@@ -27,68 +27,62 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
             $email = strtolower($idpparams['userinfo']['email']);
             if (!$email) {
                 // TODO: email not set -> "pseudo" random
-                $email = floor((microtime(true)-1689000000)*1000).'@a.eduvidual.at';
+                $email = floor((microtime(true) - 1689000000) * 1000) . '@a.eduvidual.at';
             }
 
             $testuser = $DB->get_record_select('user', 'deleted=0 AND username=? OR email=?', [$email, $email]);
-            if ($testuser && $testuser->deleted == 0) {
-                // If that user is a shibboleth_link-account we use it.
-                // if ($testuser->auth == 'shibboleth') {
-                //     $user = core_user::get_user($testuser->id);
-                //     complete_user_login($user);
-                //     \auth_shibboleth_link\lib::link_store();
-                //     \auth_shibboleth_link\lib::check_login();
-                //     echo $OUTPUT->header();
-                //     echo $OUTPUT->render_from_template('auth_shibboleth_link/alert', array(
-                //         'content' => get_string('auth:createaccount:success', 'auth_shibboleth_link'),
-                //         'type' => 'success',
-                //         'url' => $CFG->wwwroot . '/my',
-                //     ));
-                //     echo $OUTPUT->footer();
-                // } else {
-                echo $OUTPUT->header();
-                echo $OUTPUT->render_from_template('auth_shibboleth_link/alert', array(
-                    'content' => get_string('auth:createaccount:userexists', 'auth_shibboleth_link'),
-                    'type' => 'warning',
-                    'url' => $CFG->wwwroot . '/auth/shibboleth_link/index.php?datahash=' . $datahash . '&linkorcreate=' . \auth_shibboleth_link\lib::$ACTION_LINK_OTHER,
-                ));
-                echo $OUTPUT->footer();
-                // }
-            } else {
-                // Create a user with the information from shibboleth.
-                require_once($CFG->dirroot . '/user/lib.php');
-                $idpparams['userinfo']['email'] = $email;
-                $idpparams['userinfo']['confirmed'] = 1;
-                $idpparams['userinfo']['mnethostid'] = 1;
-                $idpparams['userinfo']['username'] = strtolower($email);
-                $idpparams['userinfo']['password'] = generate_password();
 
-                $userid = \user_create_user($idpparams['userinfo']);
-                if (!empty($userid)) {
-                    $user = core_user::get_user($userid, '*', IGNORE_MISSING);
-                    $user->auth = 'manual';
-                    $DB->update_record('user', $user);
-                    complete_user_login($user);
-                    \auth_shibboleth_link\lib::link_store($user);
-                    $urltogo = \auth_shibboleth_link\lib::check_login(false);
-                    redirect($urltogo, get_string('auth:createaccount:success', 'auth_shibboleth_link'), 0, \core\output\notification::NOTIFY_SUCCESS);
+            if ($testuser && $testuser->deleted == 0) {
+                // user already exists, use emailadress with firstname suffix
+                $email = str_replace('@', '+'.strtolower($idpparams['userinfo']['firstname']).'@', $email);
+
+                $testuser = $DB->get_record_select('user', 'deleted=0 AND username=?', [$email]);
+                if ($testuser) {
                     echo $OUTPUT->header();
                     echo $OUTPUT->render_from_template('auth_shibboleth_link/alert', array(
-                        'content' => get_string('auth:createaccount:success', 'auth_shibboleth_link'),
-                        'type' => 'success',
-                        'url' => $CFG->wwwroot . '/my',
-                    ));
-                    echo $OUTPUT->footer();
-                } else {
-                    echo $OUTPUT->header();
-                    echo $OUTPUT->render_from_template('auth_shibboleth_link/alert', array(
-                        'content' => get_string('auth:createaccount:error', 'auth_shibboleth_link'),
+                        'content' => get_string('auth:createaccount:userexists_link', 'auth_shibboleth_link'),
                         'type' => 'warning',
-                        'url' => $CFG->wwwroot . '/login/index.php',
+                        'url' => $CFG->wwwroot . '/auth/shibboleth_link/index.php?datahash=' . $datahash . '&linkorcreate=' . \auth_shibboleth_link\lib::$ACTION_LINK_OTHER,
                     ));
                     echo $OUTPUT->footer();
+                    exit;
                 }
             }
+
+            // Create a user with the information from shibboleth.
+            require_once($CFG->dirroot . '/user/lib.php');
+            $idpparams['userinfo']['email'] = $email;
+            $idpparams['userinfo']['confirmed'] = 1;
+            $idpparams['userinfo']['mnethostid'] = 1;
+            $idpparams['userinfo']['username'] = strtolower($email);
+            $idpparams['userinfo']['password'] = generate_password();
+
+            $userid = \user_create_user($idpparams['userinfo']);
+            if (!empty($userid)) {
+                $user = core_user::get_user($userid, '*', IGNORE_MISSING);
+                $user->auth = 'manual';
+                $DB->update_record('user', $user);
+                complete_user_login($user);
+                \auth_shibboleth_link\lib::link_store($user);
+                $urltogo = \auth_shibboleth_link\lib::check_login(false);
+                redirect($urltogo, get_string('auth:createaccount:success', 'auth_shibboleth_link'), 0, \core\output\notification::NOTIFY_SUCCESS);
+                echo $OUTPUT->header();
+                echo $OUTPUT->render_from_template('auth_shibboleth_link/alert', array(
+                    'content' => get_string('auth:createaccount:success', 'auth_shibboleth_link'),
+                    'type' => 'success',
+                    'url' => $CFG->wwwroot . '/my',
+                ));
+                echo $OUTPUT->footer();
+            } else {
+                echo $OUTPUT->header();
+                echo $OUTPUT->render_from_template('auth_shibboleth_link/alert', array(
+                    'content' => get_string('auth:createaccount:error', 'auth_shibboleth_link'),
+                    'type' => 'warning',
+                    'url' => $CFG->wwwroot . '/login/index.php',
+                ));
+                echo $OUTPUT->footer();
+            }
+
             break;
         case \auth_shibboleth_link\lib::$ACTION_LINK_CURRENT: // == 3
             if (isloggedin() && !isguestuser()) {
@@ -196,6 +190,9 @@ if (!empty($_SERVER[$pluginconfig->user_attribute])) {    // Shibboleth auto-log
         // }
     }
 
+    $email = $idpparams['userinfo']['email'];
+    $testuser = $DB->get_record_select('user', 'deleted=0 AND username=? OR email=?', [$email, $email]);
+
     // If we are here then the login did not work. Either no user at all, or it has gone.
     // Store the user info from shibboleth in the cache.
     \auth_shibboleth_link\lib::link_data_store_cache($idpparams);
@@ -204,6 +201,7 @@ if (!empty($_SERVER[$pluginconfig->user_attribute])) {    // Shibboleth auto-log
     $PAGE->set_title(get_string('auth:linkaccount', 'auth_shibboleth_link'));
     echo $OUTPUT->header();
     echo $OUTPUT->render_from_template('auth_shibboleth_link/link_or_create', array(
+        'userexists' => !!$testuser,
         'asklinkorcreate' => $asklinkorcreate,
         'datahash' => \auth_shibboleth_link\lib::datahash($idpparams),
         'idpusername' => $idpparams['idpusername'],

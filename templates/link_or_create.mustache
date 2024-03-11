@@ -30,6 +30,13 @@
     <h3>{{#str}} auth:shibboleth:welcome, auth_shibboleth_link {{/str}}, {{firstname}} {{lastname}}</h3>
     <p>{{#str}} auth:shibboleth:welcome:question, auth_shibboleth_link {{/str}}</p>
 {{/userdata}}
+
+{{#userexists}}
+    <p class="alert alert-warning">
+        {{#str}} auth:createaccount:userexists, auth_shibboleth_link {{/str}}
+    </p>
+{{/userexists}}
+
 <table border="0" class="generaltable">
     <tbody>
         {{#isloggedin}}
