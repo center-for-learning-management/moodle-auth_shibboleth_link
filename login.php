@@ -7,6 +7,12 @@ require_once($CFG->dirroot . "/auth/shibboleth/auth.php");
 $embed = optional_param('embed', 0, PARAM_INT);
 $idp = optional_param('idp', null, PARAM_RAW);
 $replacelink = optional_param('replacelink', 0, PARAM_BOOL);
+$wantsurl = optional_param('wantsurl', '', PARAM_URL);
+
+// In case a wantsurl was passed, store it to the session.
+if (!empty($wantsurl)) {
+    $SESSION->wantsurl = $wantsurl;
+}
 
 // Check for timed out sessions.
 if (!empty($SESSION->has_timed_out)) {
