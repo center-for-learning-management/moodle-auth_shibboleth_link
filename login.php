@@ -12,10 +12,14 @@ $wantsurl = optional_param('wantsurl', '', PARAM_URL);
 // In case a wantsurl was passed, store it to the session.
 if (!empty($wantsurl)) {
     $wantsurl = new moodle_url($wantsurl);
-    // this checks, that the url is only local or else throws an error
-    $wantsurl = $wantsurl->out_as_local_url();
 
-    $SESSION->wantsurl = $wantsurl;
+    if (!$wantsurl->is_local_url()) {
+        throw new moodle_exception('invalid_wantsurl');
+    }
+
+    // Note: wants url should always be a complete url including host
+    // because other moodle logic depends on this
+    $SESSION->wantsurl = $wantsurl->out(false);
 }
 
 // Check for timed out sessions.
