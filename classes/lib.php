@@ -122,7 +122,7 @@ class lib {
         $ar = array(
             'idp' => $_SERVER['Shib-Identity-Provider'],
             'idpusername' => $_SERVER[$pluginconfig->user_attribute],
-            'userinfo' => $shibbolethauth->get_userinfo(strtolower($_SERVER[$pluginconfig->user_attribute])),
+            'userinfo' => $shibbolethauth->get_userinfo($_SERVER[$pluginconfig->user_attribute]),
         );
         // Attach all info from $_SERVER in case we need it later.
         foreach ($_SERVER as $key => $value) {
@@ -152,29 +152,8 @@ class lib {
     public static function link_get($idpparams) {
         global $DB;
 
-        // fallback for old lowercase usernames
-        // also fallback to allow old pods idp, with lowercase bpk
-        if ($idpparams['idpusername'] !== strtolower($idpparams['idpusername'])) {
-            // compare idpusername case sensitive!
-            $idpusername_where = $DB->sql_like('idpusername', '?');
-
-            $sql = "UPDATE {auth_shibboleth_link}
-                        SET idpusername=?, idp=?
-                        WHERE (idp = ? OR idp='http://digitaleschuleprod.onmicrosoft.com/B2C_1A_signin_saml')
-                            AND {$idpusername_where}";
-            $dbparams = [
-                $idpparams['idpusername'],
-                $idpparams['idp'],
-                $idpparams['idp'],
-                $DB->sql_like_escape(strtolower($idpparams['idpusername'])),
-            ];
-
-            $DB->execute($sql, $dbparams);
-        }
-
         // compare idpusername case sensitive!
-        $idpusername_where = $DB->sql_like('idpusername', '?');
-
+        $idpusername_where = $DB->sql_equal('idpusername', '?');
         $sql = "SELECT *
                     FROM {auth_shibboleth_link}
                     WHERE idp = ?
@@ -185,8 +164,8 @@ class lib {
                         )";
         $dbparams = [
             $idpparams['idp'],
-            $DB->sql_like_escape($idpparams['idpusername']),
-            $DB->sql_like_escape(ltrim($idpparams['idpusername'], '0')),
+            $idpparams['idpusername'],
+            ltrim($idpparams['idpusername'], '0'),
         ];
 
         return $DB->get_record_sql($sql, $dbparams);
@@ -215,9 +194,9 @@ class lib {
             $user = $USER;
         $idpparams = self::link_data_from_cache();
 
-        $link = $DB->get_record_select('auth_shibboleth_link', 'idp=? AND ' . $DB->sql_like('idpusername', '?'),
-            [$idpparams['idp'], $DB->sql_like_escape($idpparams['idpusername'])]);
-
+        $link = $DB->get_record_select('auth_shibboleth_link',
+            'idp=? AND ' . $DB->sql_equal('idpusername', '?'),
+            [$idpparams['idp'], $idpparams['idpusername']]);
 
         if (!empty($link->id)) {
             $link->userid = $user->id;
