@@ -30,6 +30,11 @@ class lib {
     public static $ACTION_LINK_OTHER = 2;
     public static $ACTION_LINK_CURRENT = 3;
 
+    // Werte für auth_shibboleth_link.source - wer hat den Link zuletzt geändert.
+    public const SOURCE_USER = 0;
+    public const SOURCE_AUTOMATCH = 1;
+    public const SOURCE_MANAGER = 2;
+
     private static $datahash = '';
 
     public static function check_hooks() {
@@ -200,6 +205,8 @@ class lib {
 
         if (!empty($link->id)) {
             $link->userid = $user->id;
+            $link->usermodified = $user->id;
+            $link->source = static::SOURCE_USER;
             $DB->update_record('auth_shibboleth_link', $link);
 
             static::link_log_used($link, $idpparams);
@@ -215,6 +222,8 @@ class lib {
                 'idpemail' => $idpparams['userinfo']['email'],
                 'lastseen' => time(),
                 'userid' => $user->id,
+                'usermodified' => $user->id,
+                'source' => static::SOURCE_USER,
             );
             return $DB->insert_record('auth_shibboleth_link', $link);
         }

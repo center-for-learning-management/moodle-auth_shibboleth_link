@@ -57,5 +57,21 @@ function xmldb_auth_shibboleth_link_upgrade($oldversion = 0) {
         upgrade_plugin_savepoint(true, 2023120400, 'auth', 'shibboleth_link');
     }
 
+    if ($oldversion < 2026051300) {
+        $table = new xmldb_table('auth_shibboleth_link');
+
+        $field = new xmldb_field('source', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'created');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'source');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2026051300, 'auth', 'shibboleth_link');
+    }
+
     return true;
 }
