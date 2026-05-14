@@ -73,5 +73,21 @@ function xmldb_auth_shibboleth_link_upgrade($oldversion = 0) {
         upgrade_plugin_savepoint(true, 2026051300, 'auth', 'shibboleth_link');
     }
 
+    if ($oldversion < 2026051400) {
+        $table = new xmldb_table('auth_shibboleth_link');
+
+        $index = new xmldb_index('userid', XMLDB_INDEX_NOTUNIQUE, ['userid']);
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        $index = new xmldb_index('idpusername', XMLDB_INDEX_NOTUNIQUE, ['idpusername']);
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        upgrade_plugin_savepoint(true, 2026051400, 'auth', 'shibboleth_link');
+    }
+
     return true;
 }

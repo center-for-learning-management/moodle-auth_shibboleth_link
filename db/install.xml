@@ -21,6 +21,10 @@
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Primary key for auth_shibboleth_link"/>
       </KEYS>
+      <INDEXES>
+        <INDEX NAME="userid" UNIQUE="false" FIELDS="userid"/>
+        <INDEX NAME="idpusername" UNIQUE="false" FIELDS="idpusername"/>
+      </INDEXES>
     </TABLE>
   </TABLES>
 </XMLDB>
