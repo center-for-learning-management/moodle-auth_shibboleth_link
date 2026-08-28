@@ -62,6 +62,8 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
                 $user = core_user::get_user($userid, '*', IGNORE_MISSING);
                 $user->auth = 'manual';
                 $DB->update_record('user', $user);
+                // Herkunft des Accounts festhalten: Selbst-Anlage nach SSO-Login.
+                set_user_preference('local_eduvidual_created_source', 'shibboleth_link', $userid);
                 complete_user_login($user);
                 \auth_shibboleth_link\lib::link_store($user);
                 $urltogo = \auth_shibboleth_link\lib::check_login(false);
