@@ -34,6 +34,7 @@ class lib {
     public const SOURCE_USER = 0;
     public const SOURCE_AUTOMATCH = 1;
     public const SOURCE_MANAGER = 2;
+    public const SOURCE_IMPORT = 3;
 
     private static $datahash = '';
 
