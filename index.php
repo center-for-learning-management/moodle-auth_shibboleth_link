@@ -7,7 +7,7 @@
 require('../../config.php');
 require_once($CFG->dirroot . '/auth/shibboleth_link/classes/lib.php');
 
-$datahash = optional_param('datahash', '', PARAM_RAW);
+$datahash = optional_param('datahash', '', PARAM_ALPHANUM);
 $linkorcreate = optional_param('linkorcreate', 0, PARAM_INT);
 $replacelink = optional_param('replacelink', 0, PARAM_INT);
 $context = context_system::instance();
@@ -65,6 +65,7 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
                 // Herkunft des Accounts festhalten: Selbst-Anlage nach SSO-Login.
                 set_user_preference('local_eduvidual_created_source', 'shibboleth_link', $userid);
                 complete_user_login($user);
+                // link_store() also invalidates the (now used) cached SSO data / datahash.
                 \auth_shibboleth_link\lib::link_store($user);
                 $urltogo = \auth_shibboleth_link\lib::check_login(false);
                 redirect($urltogo, get_string('auth:createaccount:success', 'auth_shibboleth_link'), 0, \core\output\notification::NOTIFY_SUCCESS);
@@ -102,13 +103,20 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
         case \auth_shibboleth_link\lib::$ACTION_LINK_OTHER: // == 2
             // Capture wantsurl before the session is destroyed by logout.
             $wantsurl = $SESSION->wantsurl;
+            // $idpparams above was only populated because $datahash already matched
+            // THIS (pre-logout) session's stored token - i.e. it is already validated.
+            // require_logout() below will destroy/replace $SESSION, so re-bind the
+            // already-validated hash to the fresh session that follows, exactly like
+            // wantsurl, otherwise the post-login redirect would be rejected.
+            $validateddatahash = $datahash;
             if (isloggedin() && !isguestuser()) {
                 require_logout();
             }
+            \auth_shibboleth_link\lib::bind_session_datahash($validateddatahash);
             \auth_shibboleth_link\lib::link_data_store_cache($idpparams);
             // @TODO we will loose the current SESSION->wantsurl here! we should cache it somehow!
             // Store this page as wantsurl.
-            $SESSION->wantsurl = $CFG->wwwroot . '/auth/shibboleth_link/index.php?datahash=' . $datahash . '&linkorcreate=' . \auth_shibboleth_link\lib::$ACTION_LINK_CURRENT;
+            $SESSION->wantsurl = $CFG->wwwroot . '/auth/shibboleth_link/index.php?datahash=' . $validateddatahash . '&linkorcreate=' . \auth_shibboleth_link\lib::$ACTION_LINK_CURRENT;
             // Redirect to normal login.
             redirect($CFG->wwwroot . '/login/index.php');
             break;

@@ -26,5 +26,10 @@ defined('MOODLE_INTERNAL') || die;
 $definitions = [
     'userinfo' => [
         'mode' => cache_store::MODE_APPLICATION,
+        // Defense in depth: even though entries are now keyed by an
+        // unguessable, session-bound token (see classes/lib.php::datahash())
+        // and are deleted immediately after use, cap how long an unused
+        // entry can live in this shared, application-scoped cache.
+        'ttl' => 600,
     ],
 ];
