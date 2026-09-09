@@ -89,5 +89,26 @@ function xmldb_auth_shibboleth_link_upgrade($oldversion = 0) {
         upgrade_plugin_savepoint(true, 2026051400, 'auth', 'shibboleth_link');
     }
 
+    if ($oldversion < 2026090900) {
+        $table = new xmldb_table('auth_shibboleth_link');
+
+        // XMLDB kennt keine Spalten-Collation, daher raw SQL - nur für MySQL/MariaDB relevant,
+        // Postgres & Co. kennen dieses Problem so nicht.
+        if ($DB->get_dbfamily() === 'mysql') {
+            $DB->execute("ALTER TABLE {auth_shibboleth_link}
+                MODIFY idp VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT '',
+                MODIFY idpusername VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT ''");
+        }
+
+        // Composite-Unique-Index formalisieren (existiert auf manchen Installationen bereits
+        // manuell, ist aber bisher nicht Teil des Plugin-Schemas).
+        $index = new xmldb_index('idpidp', XMLDB_INDEX_UNIQUE, ['idp', 'idpusername']);
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+    upgrade_plugin_savepoint(true, 2026090900, 'auth', 'shibboleth_link');
+}
+
     return true;
 }
