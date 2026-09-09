@@ -107,8 +107,8 @@ function xmldb_auth_shibboleth_link_upgrade($oldversion = 0) {
             $dbman->add_index($table, $index);
         }
 
-    upgrade_plugin_savepoint(true, 2026090900, 'auth', 'shibboleth_link');
-}
+        upgrade_plugin_savepoint(true, 2026090900, 'auth', 'shibboleth_link');
+    }
 
     return true;
 }
