@@ -37,6 +37,8 @@ require_login();
 $linked_users = $DB->get_records('auth_shibboleth_link', ['userid' => $USER->id], 'lastseen DESC');
 
 if ($action == 'unlink') {
+    require_sesskey();
+
     $link_id = required_param('link_id', PARAM_INT);
     if (!$linked_users[$link_id]) {
         throw new \moodle_exception('not allowed');
@@ -59,6 +61,8 @@ if (!$linked_users) {
             $linked_user->lastseen = userdate($linked_user->lastseen);
             return $linked_user;
         }, $linked_users)),
+        'sesskey' => sesskey(),
+        'actionurl' => $PAGE->url->out(false),
     ]);
 }
 
