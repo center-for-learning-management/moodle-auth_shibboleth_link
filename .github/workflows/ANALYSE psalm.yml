@@ -7,7 +7,7 @@ name: Psalm
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master", "main" ]
 
 jobs:
   psalm:
