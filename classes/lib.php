@@ -40,14 +40,13 @@ class lib {
 
     public static function check_hooks() {
         global $CFG;
-        $idpparams = \auth_shibboleth_link\lib::link_data_from_cache();
+        $idpparams = self::link_data_from_cache();
         $hooks = explode(';', get_config('auth_shibboleth_link', 'hooks'));
         foreach ($hooks as $hook) {
             if (!empty($hook) && file_exists($CFG->dirroot . '/' . $hook)) {
                 require_once($CFG->dirroot . '/' . $hook);
             }
         }
-
     }
 
     /**
@@ -61,11 +60,9 @@ class lib {
         if (\user_not_fully_set_up($USER, true)) {
             $urltogo = $CFG->wwwroot . '/user/edit.php?id=' . $USER->id . '&amp;course=' . SITEID;
             // We don't delete $SESSION->wantsurl yet, so we get there later
-
         } else if (isset($SESSION->wantsurl) and (strpos($SESSION->wantsurl, $CFG->wwwroot) === 0)) {
             $urltogo = $SESSION->wantsurl;    /// Because it's an address in this site
             unset($SESSION->wantsurl);
-
         } else {
             $urltogo = $CFG->wwwroot . '/';      /// Go to the standard home page
             unset($SESSION->wantsurl);         /// Just in case
@@ -88,20 +85,23 @@ class lib {
             }
         }
         $SESSION->shibboleth_session_id = $sessionkey;
-        if ($doredirect)
+        if ($doredirect) {
             \redirect($urltogo);
-        else return $urltogo;
+        } else { return $urltogo;
+        }
     }
 
     /**
      * Create some unique hash out of idpparams.
      * @return the hash
      */
-    public static function datahash($idpparams = array()) {
-        if (!empty(\optional_param('datahash', '', PARAM_RAW)))
+    public static function datahash($idpparams = []) {
+        if (!empty(\optional_param('datahash', '', PARAM_RAW))) {
             self::$datahash = \optional_param('datahash', '', PARAM_RAW);
-        if (empty(self::$datahash) && !empty($idpparams))
+        }
+        if (empty(self::$datahash) && !empty($idpparams)) {
             self::$datahash = md5(json_encode($idpparams));
+        }
         return self::$datahash;
     }
 
@@ -125,11 +125,11 @@ class lib {
         $pluginconfig = \get_config('auth_shibboleth');
         $shibbolethauth = \get_auth_plugin('shibboleth');
 
-        $ar = array(
+        $ar = [
             'idp' => $_SERVER['Shib-Identity-Provider'],
             'idpusername' => $_SERVER[$pluginconfig->user_attribute],
             'userinfo' => $shibbolethauth->get_userinfo($_SERVER[$pluginconfig->user_attribute]),
-        );
+        ];
         // Attach all info from $_SERVER in case we need it later.
         foreach ($_SERVER as $key => $value) {
             if (empty($ar['userinfo'][$key])) {
@@ -196,13 +196,16 @@ class lib {
      */
     public static function link_store($user = 0) {
         global $DB, $USER;
-        if (empty($user))
+        if (empty($user)) {
             $user = $USER;
+        }
         $idpparams = self::link_data_from_cache();
 
-        $link = $DB->get_record_select('auth_shibboleth_link',
+        $link = $DB->get_record_select(
+            'auth_shibboleth_link',
             'idp=? AND ' . $DB->sql_equal('idpusername', '?'),
-            [$idpparams['idp'], $idpparams['idpusername']]);
+            [$idpparams['idp'], $idpparams['idpusername']]
+        );
 
         if (!empty($link->id)) {
             $link->userid = $user->id;
@@ -214,7 +217,7 @@ class lib {
 
             return $link->id;
         } else {
-            $link = array(
+            $link = [
                 'created' => time(),
                 'idp' => $idpparams['idp'],
                 'idpusername' => $idpparams['idpusername'],
@@ -225,7 +228,7 @@ class lib {
                 'userid' => $user->id,
                 'usermodified' => $user->id,
                 'source' => static::SOURCE_USER,
-            );
+            ];
             return $DB->insert_record('auth_shibboleth_link', $link);
         }
     }
