@@ -1,4 +1,18 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 // Mainly taken from auth/shibboleth/index.php
 
@@ -16,7 +30,7 @@ $PAGE->set_context($context);
 $PAGE->set_heading(get_string('pluginname', 'auth_shibboleth_link'));
 $PAGE->set_title(get_string('pluginname', 'auth_shibboleth_link'));
 $PAGE->set_pagelayout('mydashboard');
-$PAGE->set_url('/auth/shibboleth_link/index.php', array('datahash' => $datahash, 'linkorcreate' => $linkorcreate));
+$PAGE->set_url('/auth/shibboleth_link/index.php', ['datahash' => $datahash, 'linkorcreate' => $linkorcreate]);
 
 $idpparams = \auth_shibboleth_link\lib::link_data_from_cache();
 if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
@@ -39,11 +53,11 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
                 $testuser = $DB->get_record_select('user', 'deleted=0 AND username=?', [$email]);
                 if ($testuser) {
                     echo $OUTPUT->header();
-                    echo $OUTPUT->render_from_template('auth_shibboleth_link/alert', array(
+                    echo $OUTPUT->render_from_template('auth_shibboleth_link/alert', [
                         'content' => get_string('auth:createaccount:userexists_link', 'auth_shibboleth_link'),
                         'type' => 'warning',
                         'url' => $CFG->wwwroot . '/auth/shibboleth_link/index.php?datahash=' . $datahash . '&linkorcreate=' . \auth_shibboleth_link\lib::$ACTION_LINK_OTHER,
-                    ));
+                    ]);
                     echo $OUTPUT->footer();
                     exit;
                 }
@@ -69,19 +83,19 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
                 $urltogo = \auth_shibboleth_link\lib::check_login(false);
                 redirect($urltogo, get_string('auth:createaccount:success', 'auth_shibboleth_link'), 0, \core\output\notification::NOTIFY_SUCCESS);
                 echo $OUTPUT->header();
-                echo $OUTPUT->render_from_template('auth_shibboleth_link/alert', array(
+                echo $OUTPUT->render_from_template('auth_shibboleth_link/alert', [
                     'content' => get_string('auth:createaccount:success', 'auth_shibboleth_link'),
                     'type' => 'success',
                     'url' => $CFG->wwwroot . '/my',
-                ));
+                ]);
                 echo $OUTPUT->footer();
             } else {
                 echo $OUTPUT->header();
-                echo $OUTPUT->render_from_template('auth_shibboleth_link/alert', array(
+                echo $OUTPUT->render_from_template('auth_shibboleth_link/alert', [
                     'content' => get_string('auth:createaccount:error', 'auth_shibboleth_link'),
                     'type' => 'warning',
                     'url' => $CFG->wwwroot . '/login/index.php',
-                ));
+                ]);
                 echo $OUTPUT->footer();
             }
 
@@ -131,7 +145,7 @@ if (!empty($_SERVER[$pluginconfig->user_attribute])) {    // Shibboleth auto-log
     \auth_shibboleth_link\lib::link_data_store_cache($idpparams);
     $link = \auth_shibboleth_link\lib::link_get($idpparams);
     $asklinkorcreate = true; // Triggers if user has a decision to link account.
-    $msgs = array();
+    $msgs = [];
     if (!empty($link->userid)) {
         \auth_shibboleth_link\lib::link_log_used($link, $idpparams);
 
@@ -140,28 +154,28 @@ if (!empty($_SERVER[$pluginconfig->user_attribute])) {    // Shibboleth auto-log
         if ($replacelink === 1) {
             if ($user->auth == 'shibboleth') {
                 // Sorry we can not do this!
-                $msgs[] = array(
+                $msgs[] = [
                     'type' => 'danger',
                     'content' => get_string('auth:warning:userreplacenotallowed', 'auth_shibboleth_link'),
-                );
+                ];
                 $asklinkorcreate = false;
             } else {
-                $DB->delete_records('auth_shibboleth_link', array('id' => $link->id));
+                $DB->delete_records('auth_shibboleth_link', ['id' => $link->id]);
                 unset($link);
-                $msgs[] = array(
+                $msgs[] = [
                     'type' => 'success',
                     'content' => get_string('auth:warning:userreplaced', 'auth_shibboleth_link'),
-                );
+                ];
             }
         }
         if ($user->deleted == 1) {
             // Show an error that the linked account has gone.
-            $DB->delete_records('auth_shibboleth_link', array('id' => $link->id));
+            $DB->delete_records('auth_shibboleth_link', ['id' => $link->id]);
             unset($link);
-            $msgs[] = array(
+            $msgs[] = [
                 'type' => 'danger',
                 'content' => get_string('auth:warning:usergone', 'auth_shibboleth_link'),
-            );
+            ];
         }
 
         if (!empty($user->id) && $user->id == $link->userid && $user->deleted == 0) {
@@ -202,19 +216,18 @@ if (!empty($_SERVER[$pluginconfig->user_attribute])) {    // Shibboleth auto-log
     $PAGE->set_heading(get_string('auth:linkaccount', 'auth_shibboleth_link'));
     $PAGE->set_title(get_string('auth:linkaccount', 'auth_shibboleth_link'));
     echo $OUTPUT->header();
-    echo $OUTPUT->render_from_template('auth_shibboleth_link/link_or_create', array(
+    echo $OUTPUT->render_from_template('auth_shibboleth_link/link_or_create', [
         'userexists' => !!$testuser,
         'asklinkorcreate' => $asklinkorcreate,
         'datahash' => \auth_shibboleth_link\lib::datahash($idpparams),
         'idpusername' => $idpparams['idpusername'],
         'isloggedin' => (isloggedin() && !isguestuser($USER)) ? 1 : 0,
         'msgs' => $msgs,
-        'userdata' => array($idpparams['userinfo']),
+        'userdata' => [$idpparams['userinfo']],
         'userfullname' => \fullname($USER),
         'wwwroot' => $CFG->wwwroot,
-    ));
+    ]);
     echo $OUTPUT->footer();
-
 }
 // If we can find any (user independent) Shibboleth attributes but no user
 // attributes we probably didn't receive any user attributes
