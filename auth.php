@@ -30,7 +30,6 @@ require_once($CFG->dirroot . '/auth/shibboleth/auth.php');
  * Shibboleth_link authentication plugin.
  */
 class auth_plugin_shibboleth_link extends auth_plugin_shibboleth {
-
     /**
      * Constructor.
      */
