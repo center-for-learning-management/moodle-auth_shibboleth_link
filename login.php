@@ -1,4 +1,18 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 // Mainly taken from auth/shibboleth/login.php
 require_once("../../config.php");
@@ -61,7 +75,7 @@ if (isset($idp)) {
     if (isset($idplist[$idp])) {
         set_saml_cookie($idp);
 
-        $targeturl = new moodle_url('/auth/shibboleth_link/index.php', array('replacelink' => $replacelink));
+        $targeturl = new moodle_url('/auth/shibboleth_link/index.php', ['replacelink' => $replacelink]);
         $idpinfo = $idplist[$idp];
 
         // Redirect to SessionInitiator with entityID as argument.
@@ -72,7 +86,6 @@ if (isset($idp)) {
         }
         // For Shibboleth 1.x Service Providers.
         header('Location: ' . $sso . '?providerId=' . urlencode($idp) . '&target=' . urlencode($targeturl->out()));
-
     } else {
         $isvalid = false;
     }
@@ -87,8 +100,9 @@ $PAGE->set_title("$site->fullname: $loginsite");
 $PAGE->set_heading($site->fullname);
 $PAGE->set_pagelayout('login');
 
-if (empty($embed))
+if (empty($embed)) {
     echo $OUTPUT->header();
+}
 
 /*
 if (isloggedin() and !isguestuser()) {
@@ -143,7 +157,7 @@ $templatedata = (object)[
     'idps' => $idps,
     'instructions' => $instructions,
     'loginname' => 'edu.IDAM',
-    //'loginname' => $config->login_name ?? null,
+    // 'loginname' => $config->login_name ?? null,
     'logintoken' => \core\session\manager::get_login_token(),
     'loginurl' => new moodle_url('/auth/shibboleth_link/login.php'),
     'showinstructions' => $showinstructions,
@@ -156,6 +170,7 @@ $templatedata = (object)[
 
 // Render the login form.
 echo $OUTPUT->render_from_template('auth_shibboleth_link/login_form', $templatedata);
-//}
-if (empty($embed))
+// }
+if (empty($embed)) {
     echo $OUTPUT->footer();
+}
