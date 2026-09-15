@@ -94,14 +94,52 @@ class lib {
     }
 
     /**
-     * Create some unique hash out of idpparams.
-     * @return the hash
+     * Session key under which we remember the datahash that THIS browser
+     * session legitimately obtained via a real Shibboleth SSO round trip.
+     */
+    private const SESSION_DATAHASH_KEY = 'auth_shibboleth_link_datahash';
+
+    /**
+     * Create/verify a session-bound token used to key into the (shared,
+     * application-scoped) userinfo cache.
+     *
+     * SECURITY: the cache is MODE_APPLICATION, i.e. shared across every user
+     * on the site, so the hash used to key into it must never be trusted
+     * purely because a client supplied it - anyone could then read or claim
+     * another user's cached SSO identity. We therefore:
+     *   1. Generate the hash ourselves from cryptographically random bytes
+     *      (not a deterministic digest of guessable IdP data), and
+     *   2. Bind it to the Moodle $SESSION of the browser that actually
+     *      performed the SSO login, and
+     *   3. Only ever accept a client-supplied 'datahash' GET param if it
+     *      matches the value this same session previously generated.
+     *
+     * @param array $idpparams params freshly received from the IdP (only
+     *              passed when we are about to cache new data).
+     * @return string the (validated) hash, or '' if none is available/valid.
      */
     public static function datahash($idpparams = array()) {
-        if (!empty(\optional_param('datahash', '', PARAM_RAW)))
-            self::$datahash = \optional_param('datahash', '', PARAM_RAW);
-        if (empty(self::$datahash) && !empty($idpparams))
-            self::$datahash = md5(json_encode($idpparams));
+        global $SESSION;
+
+        // Already resolved earlier in this request - reuse it.
+        if (!empty(self::$datahash)) {
+            return self::$datahash;
+        }
+
+        $requested = \optional_param('datahash', '', PARAM_ALPHANUM);
+        $sessionhash = $SESSION->{self::SESSION_DATAHASH_KEY} ?? '';
+
+        if (!empty($requested) && !empty($sessionhash) && \hash_equals($sessionhash, $requested)) {
+            // The client gave us back exactly the token we handed to THIS
+            // session earlier - safe to use it to look up the cache entry.
+            self::$datahash = $sessionhash;
+        } else if (!empty($idpparams)) {
+            // We are about to store fresh SSO data for this session: mint a
+            // new unguessable token and remember it against this session.
+            self::$datahash = \bin2hex(\random_bytes(32));
+            $SESSION->{self::SESSION_DATAHASH_KEY} = self::$datahash;
+        }
+
         return self::$datahash;
     }
 
@@ -112,8 +150,53 @@ class lib {
     public static function link_data_from_cache() {
         // Attention, we use cache_store::MODE_APPLICATION that shares data through all users.
         // This is necessary to have the data persisting login/logout. Therefore we include the data_hash into the name.
+        // The hash itself is validated in self::datahash() and is never trusted purely because
+        // it was supplied on the URL - see the security note there.
+        $hash = self::datahash();
+        if (empty($hash)) {
+            return array();
+        }
         $cache = \cache::make('auth_shibboleth_link', 'userinfo');
-        return json_decode($cache->get('json_' . self::datahash()), true);
+        $raw = $cache->get('json_' . $hash);
+        if ($raw === false) {
+            return array();
+        }
+        $data = json_decode($raw, true);
+        return is_array($data) ? $data : array();
+    }
+
+    /**
+     * Explicitly (re-)bind an already-validated datahash to the current
+     * session. Used when we intentionally destroy/replace the session (e.g.
+     * logout as part of the "link to a different account" flow) and need to
+     * carry the validated token over to the fresh session, the same way
+     * $SESSION->wantsurl is carried over.
+     *
+     * IMPORTANT: only ever call this with a hash that has already been
+     * validated by self::datahash() against the *previous* session - never
+     * with a raw, unverified client-supplied value.
+     *
+     * @param string $hash
+     */
+    public static function bind_session_datahash($hash) {
+        global $SESSION;
+        self::$datahash = $hash;
+        $SESSION->{self::SESSION_DATAHASH_KEY} = $hash;
+    }
+
+    /**
+     * Removes a (used) entry from the cache and forgets the session binding,
+     * so the datahash cannot be replayed to link/create another account.
+     */
+    public static function link_data_forget_cache() {
+        global $SESSION;
+        $hash = self::datahash();
+        if (!empty($hash)) {
+            $cache = \cache::make('auth_shibboleth_link', 'userinfo');
+            $cache->delete('json_' . $hash);
+        }
+        unset($SESSION->{self::SESSION_DATAHASH_KEY});
+        self::$datahash = '';
     }
 
     /**
@@ -200,6 +283,11 @@ class lib {
             $user = $USER;
         $idpparams = self::link_data_from_cache();
 
+        if (empty($idpparams['idp']) || empty($idpparams['idpusername'])) {
+            // No (validated) SSO data available for this session - nothing to link.
+            return 0;
+        }
+
         $link = $DB->get_record_select('auth_shibboleth_link',
             'idp=? AND ' . $DB->sql_equal('idpusername', '?'),
             [$idpparams['idp'], $idpparams['idpusername']]);
@@ -211,6 +299,9 @@ class lib {
             $DB->update_record('auth_shibboleth_link', $link);
 
             static::link_log_used($link, $idpparams);
+
+            // Single-use: prevent the same datahash being replayed to link/create again.
+            self::link_data_forget_cache();
 
             return $link->id;
         } else {
@@ -226,7 +317,12 @@ class lib {
                 'usermodified' => $user->id,
                 'source' => static::SOURCE_USER,
             );
-            return $DB->insert_record('auth_shibboleth_link', $link);
+            $id = $DB->insert_record('auth_shibboleth_link', $link);
+
+            // Single-use: prevent the same datahash being replayed to link/create again.
+            self::link_data_forget_cache();
+
+            return $id;
         }
     }
 }
