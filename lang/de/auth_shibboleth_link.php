@@ -41,7 +41,6 @@ $string['auth:warning:usergone'] = 'Ihr Shibboleth-Zugang war mit einem Konto ve
 $string['auth:warning:userreplaced'] = 'Wie von Ihnen beauftragt wurde die Verbindung dieses Zugangs zu lokalen Konten gelöscht.';
 $string['auth:warning:userreplacenotallowed'] = 'Der Zugriff auf dieses Konto ist ausschließlich über Shibboleth möglich. Daher kann diese Verbindung nicht gelöst werden!';
 
-$string['cachedef_userinfo'] = 'Hält Benutzerinformationen im Cache.';
 
 $string['privacy:metadata:db'] = 'Verknüpft Zugänge eines Identity Providers mit lokalen Konten.';
 $string['privacy:metadata:db:idp'] = 'The Identity Provider';

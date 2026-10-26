@@ -36,11 +36,9 @@ class lib {
     public const SOURCE_MANAGER = 2;
     public const SOURCE_IMPORT = 3;
 
-    private static $datahash = '';
-
     public static function check_hooks() {
         global $CFG;
-        $idpparams = \auth_shibboleth_link\lib::link_data_from_cache();
+        $idpparams = \auth_shibboleth_link\lib::idpparams_get();
         $hooks = explode(';', get_config('auth_shibboleth_link', 'hooks'));
         foreach ($hooks as $hook) {
             if (!empty($hook) && file_exists($CFG->dirroot . '/' . $hook)) {
@@ -94,33 +92,22 @@ class lib {
     }
 
     /**
-     * Create some unique hash out of idpparams.
-     * @return the hash
-     */
-    public static function datahash($idpparams = array()) {
-        if (!empty(\optional_param('datahash', '', PARAM_RAW)))
-            self::$datahash = \optional_param('datahash', '', PARAM_RAW);
-        if (empty(self::$datahash) && !empty($idpparams))
-            self::$datahash = md5(json_encode($idpparams));
-        return self::$datahash;
-    }
-
-    /**
-     * Retrieves idp and idpusername from cache
+     * Retrieves idp and idpusername from the session
      * @return array containing data.
      */
-    public static function link_data_from_cache() {
-        // Attention, we use cache_store::MODE_APPLICATION that shares data through all users.
-        // This is necessary to have the data persisting login/logout. Therefore we include the data_hash into the name.
-        $cache = \cache::make('auth_shibboleth_link', 'userinfo');
-        return json_decode($cache->get('json_' . self::datahash()), true);
+    public static function idpparams_get() {
+        global $SESSION;
+        // Die Daten liegen in der Session statt in einem Application-Cache, der über einen Hash in der URL
+        // angesprochen wird, damit niemand anderer die SSO-Identität übernehmen kann.
+        // https://github.com/center-for-learning-management/eduvidual-src/issues/3105
+        return $SESSION->auth_shibboleth_link_idpparams ?? [];
     }
 
     /**
      * Retrieves idp and idpusername from $_SERVER-var
      * @return array containing data.
      */
-    public static function link_data_from_server() {
+    public static function idpparams_from_server() {
         global $_SERVER;
         $pluginconfig = \get_config('auth_shibboleth');
         $shibbolethauth = \get_auth_plugin('shibboleth');
@@ -140,14 +127,13 @@ class lib {
     }
 
     /**
-     * Stores idpparams to cache.
+     * Stores idpparams to the session.
      * @param $idpparams array containing params.
      */
-    public static function link_data_store_cache($idpparams) {
-        // Attention, we use cache_store::MODE_APPLICATION that shares data through all users.
-        // This is necessary to have the data persisting login/logout. Therefore we include datahash into the name.
-        $cache = \cache::make('auth_shibboleth_link', 'userinfo');
-        $cache->set('json_' . self::datahash($idpparams), json_encode($idpparams, JSON_NUMERIC_CHECK));
+    public static function idpparams_store($idpparams) {
+        global $SESSION;
+        // $SESSION übersteht complete_user_login(), nur nach require_logout() muss neu gespeichert werden.
+        $SESSION->auth_shibboleth_link_idpparams = $idpparams;
     }
 
     /**
@@ -191,14 +177,14 @@ class lib {
     }
 
     /**
-     * Get current idpparams from cache and create a link to the current user.
+     * Get current idpparams from the session and create a link to the current user.
      * @return the id of the link-entry.
      */
     public static function link_store($user = 0) {
         global $DB, $USER;
         if (empty($user))
             $user = $USER;
-        $idpparams = self::link_data_from_cache();
+        $idpparams = self::idpparams_get();
 
         $link = $DB->get_record_select('auth_shibboleth_link',
             'idp=? AND ' . $DB->sql_equal('idpusername', '?'),

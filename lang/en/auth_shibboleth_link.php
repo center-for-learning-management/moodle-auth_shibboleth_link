@@ -41,7 +41,6 @@ $string['auth:warning:usergone'] = 'Your shibboleth account has been linked to a
 $string['auth:warning:userreplaced'] = 'As requested your shibboleth login has been unlinked from your moodle account.';
 $string['auth:warning:userreplacenotallowed'] = 'Access to this account is only possible with Shibboleth. Consequently the link can not be removed!';
 
-$string['cachedef_userinfo'] = 'Holds the userinfo after shibboleth';
 
 $string['privacy:metadata:db'] = 'Stores the username from the Identity Provider.';
 $string['privacy:metadata:db:idp'] = 'The Identity Provider';

@@ -7,7 +7,6 @@
 require('../../config.php');
 require_once($CFG->dirroot . '/auth/shibboleth_link/classes/lib.php');
 
-$datahash = optional_param('datahash', '', PARAM_RAW);
 $linkorcreate = optional_param('linkorcreate', 0, PARAM_INT);
 $replacelink = optional_param('replacelink', 0, PARAM_INT);
 $context = context_system::instance();
@@ -16,9 +15,9 @@ $PAGE->set_context($context);
 $PAGE->set_heading(get_string('pluginname', 'auth_shibboleth_link'));
 $PAGE->set_title(get_string('pluginname', 'auth_shibboleth_link'));
 $PAGE->set_pagelayout('mydashboard');
-$PAGE->set_url('/auth/shibboleth_link/index.php', array('datahash' => $datahash, 'linkorcreate' => $linkorcreate));
+$PAGE->set_url('/auth/shibboleth_link/index.php', array('linkorcreate' => $linkorcreate));
 
-$idpparams = \auth_shibboleth_link\lib::link_data_from_cache();
+$idpparams = \auth_shibboleth_link\lib::idpparams_get();
 if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
     $link = \auth_shibboleth_link\lib::link_get($idpparams);
     switch ($linkorcreate) {
@@ -42,7 +41,7 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
                     echo $OUTPUT->render_from_template('auth_shibboleth_link/alert', array(
                         'content' => get_string('auth:createaccount:userexists_link', 'auth_shibboleth_link'),
                         'type' => 'warning',
-                        'url' => $CFG->wwwroot . '/auth/shibboleth_link/index.php?datahash=' . $datahash . '&linkorcreate=' . \auth_shibboleth_link\lib::$ACTION_LINK_OTHER,
+                        'url' => $CFG->wwwroot . '/auth/shibboleth_link/index.php?linkorcreate=' . \auth_shibboleth_link\lib::$ACTION_LINK_OTHER,
                     ));
                     echo $OUTPUT->footer();
                     exit;
@@ -94,7 +93,7 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
                 \auth_shibboleth_link\lib::check_login();
             } else {
                 // We logged out in the meanwhile. Go to login page.
-                $SESSION->wantsurl = $CFG->wwwroot . '/auth/shibboleth_link/index.php?datahash=' . $datahash . '&linkorcreate=' . \auth_shibboleth_link\lib::$ACTION_LINK_CURRENT;
+                $SESSION->wantsurl = $CFG->wwwroot . '/auth/shibboleth_link/index.php?linkorcreate=' . \auth_shibboleth_link\lib::$ACTION_LINK_CURRENT;
                 // Redirect to normal login.
                 redirect($CFG->wwwroot . '/login/index.php');
             }
@@ -105,10 +104,11 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
             if (isloggedin() && !isguestuser()) {
                 require_logout();
             }
-            \auth_shibboleth_link\lib::link_data_store_cache($idpparams);
+            // require_logout() startet eine neue Session, die SSO-Daten müssen dort wieder hinein.
+            \auth_shibboleth_link\lib::idpparams_store($idpparams);
             // @TODO we will loose the current SESSION->wantsurl here! we should cache it somehow!
             // Store this page as wantsurl.
-            $SESSION->wantsurl = $CFG->wwwroot . '/auth/shibboleth_link/index.php?datahash=' . $datahash . '&linkorcreate=' . \auth_shibboleth_link\lib::$ACTION_LINK_CURRENT;
+            $SESSION->wantsurl = $CFG->wwwroot . '/auth/shibboleth_link/index.php?linkorcreate=' . \auth_shibboleth_link\lib::$ACTION_LINK_CURRENT;
             // Redirect to normal login.
             redirect($CFG->wwwroot . '/login/index.php');
             break;
@@ -126,9 +126,9 @@ if (empty($pluginconfig->user_attribute)) {
 
 /// If we can find the Shibboleth attribute, save it in session and return to main login page
 if (!empty($_SERVER[$pluginconfig->user_attribute])) {    // Shibboleth auto-login
-    $idpparams = \auth_shibboleth_link\lib::link_data_from_server();
+    $idpparams = \auth_shibboleth_link\lib::idpparams_from_server();
     // immediately store data to cache.
-    \auth_shibboleth_link\lib::link_data_store_cache($idpparams);
+    \auth_shibboleth_link\lib::idpparams_store($idpparams);
     $link = \auth_shibboleth_link\lib::link_get($idpparams);
     $asklinkorcreate = true; // Triggers if user has a decision to link account.
     $msgs = array();
@@ -197,7 +197,7 @@ if (!empty($_SERVER[$pluginconfig->user_attribute])) {    // Shibboleth auto-log
 
     // If we are here then the login did not work. Either no user at all, or it has gone.
     // Store the user info from shibboleth in the cache.
-    \auth_shibboleth_link\lib::link_data_store_cache($idpparams);
+    \auth_shibboleth_link\lib::idpparams_store($idpparams);
     // Ask user if we should create an account or link to an existing one!
     $PAGE->set_heading(get_string('auth:linkaccount', 'auth_shibboleth_link'));
     $PAGE->set_title(get_string('auth:linkaccount', 'auth_shibboleth_link'));
@@ -205,7 +205,6 @@ if (!empty($_SERVER[$pluginconfig->user_attribute])) {    // Shibboleth auto-log
     echo $OUTPUT->render_from_template('auth_shibboleth_link/link_or_create', array(
         'userexists' => !!$testuser,
         'asklinkorcreate' => $asklinkorcreate,
-        'datahash' => \auth_shibboleth_link\lib::datahash($idpparams),
         'idpusername' => $idpparams['idpusername'],
         'isloggedin' => (isloggedin() && !isguestuser($USER)) ? 1 : 0,
         'msgs' => $msgs,

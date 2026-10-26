@@ -42,7 +42,7 @@
         {{#isloggedin}}
         <tr>
             <td>
-                <a href="?datahash={{datahash}}&linkorcreate=3" class="btn btn-secondary">
+                <a href="?linkorcreate=3" class="btn btn-secondary">
                     {{#pix}} i/checkpermissions {{/pix}}
                     {{#str}} auth:linkaccount, auth_shibboleth_link, { "userfullname": {{# quote }}{{ userfullname }}{{/ quote }} } {{/str}}
                 </a>
@@ -53,7 +53,7 @@
         {{/isloggedin}}
         <tr>
             <td>
-                <a href="?datahash={{datahash}}&linkorcreate=2" class="btn btn-secondary">
+                <a href="?linkorcreate=2" class="btn btn-secondary">
                     {{#pix}} i/cohort {{/pix}}
                     {{#str}} auth:linkotheraccount, auth_shibboleth_link {{/str}}
                 </a>
@@ -63,7 +63,7 @@
         </tr>
         <tr>
             <td>
-                <a href="?datahash={{datahash}}&linkorcreate=1" class="btn btn-secondary">
+                <a href="?linkorcreate=1" class="btn btn-secondary">
                     {{#pix}} i/assignroles {{/pix}}
                     {{#str}} auth:createaccount, auth_shibboleth_link, { "idpusername": {{# quote }}{{ idpusername }}{{/ quote }} } {{/str}}
                 </a>
