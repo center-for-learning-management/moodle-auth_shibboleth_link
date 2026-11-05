@@ -1,4 +1,18 @@
 <?php
+// This file is part of Moodle - https://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 // Based on the default logout-script from moodle-source /auth/shibboleth/logout.php
 // we offer an alternative logout channel  that does not require the useraccount to be
@@ -17,10 +31,8 @@ $action = optional_param('action', '', PARAM_ALPHA);
 $redirect = optional_param('return', '', PARAM_URL);
 
 // Find out whether host supports https
-$protocol = 'http://';
-if (is_https()) {
-    $protocol = 'https://';
-}
+// Do not trust the Host header or PHP_SELF (client controlled): build our own URL from wwwroot.
+$selfurl = $CFG->wwwroot . '/auth/shibboleth_link/logout.php';
 
 // If the shibboleth plugin is not enable, throw an exception.
 if (!is_enabled_auth('shibboleth')) {
@@ -31,25 +43,27 @@ if (!is_enabled_auth('shibboleth')) {
 $inputstream = file_get_contents("php://input");
 if ($action == 'logout' && !empty($redirect)) {
     // ATTENTION: HERE IS THE DIFFERENCE TO THE DEFAULT logout.php!
-    $link = $DB->get_record('auth_shibboleth_link', array('userid' => $USER->id));
+    $link = $DB->get_record('auth_shibboleth_link', ['userid' => $USER->id]);
     if (isloggedin($USER) && ($USER->auth == 'shibboleth' || !empty($link->id))) {
         // Logout user from application.
         require_logout();
     }
 
+    // Validate the return URL to prevent open redirects (same check as login.php).
+    $redirecturl = new moodle_url($redirect);
+    if (!$redirecturl->is_local_url()) {
+        throw new moodle_exception('invalid_wantsurl');
+    }
+
     // Finally, send user to the return URL.
-    redirect($redirect);
-
+    redirect($redirecturl);
 } else if (!empty($inputstream)) {
-
     // Back channel logout.
     // Set SOAP header.
-    $server = new SoapServer($protocol . $_SERVER['HTTP_HOST'] . $_SERVER['PHP_SELF'] . '/LogoutNotification.wsdl');
+    $server = new SoapServer($selfurl . '/LogoutNotification.wsdl');
     $server->addFunction("LogoutNotification");
     $server->handle();
-
 } else {
-
     // Return WSDL.
     header('Content-Type: text/xml');
 
@@ -117,7 +131,7 @@ For more information see:
 
     <service name="LogoutNotificationService">
           <port name="LogoutNotificationPort" binding="notify:LogoutNotificationBinding">
-            <soap:address location="{$protocol}{$_SERVER['HTTP_HOST']}{$_SERVER['PHP_SELF']}"/>
+            <soap:address location="{$selfurl}"/>
           </port>
     </service>
 </definitions>
