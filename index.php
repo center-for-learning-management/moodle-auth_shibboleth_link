@@ -29,7 +29,7 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
                 $email = floor((microtime(true) - 1689000000) * 1000) . '@a.eduvidual.at';
             }
 
-            $testuser = $DB->get_record_select('user', 'deleted=0 AND username=? OR email=?', [$email, $email]);
+            $testuser = $DB->get_record_select('user', 'deleted=0 AND (username=? OR email=?)', [$email, $email]);
 
             if ($testuser && $testuser->deleted == 0) {
                 // user already exists, use emailadress with firstname suffix
@@ -193,7 +193,7 @@ if (!empty($_SERVER[$pluginconfig->user_attribute])) {    // Shibboleth auto-log
     }
 
     $email = $idpparams['userinfo']['email'];
-    $testuser = $DB->get_record_select('user', 'deleted=0 AND username=? OR email=?', [$email, $email]);
+    $testuser = $DB->get_record_select('user', 'deleted=0 AND (username=? OR email=?)', [$email, $email]);
 
     // If we are here then the login did not work. Either no user at all, or it has gone.
     // Store the user info from shibboleth in the cache.

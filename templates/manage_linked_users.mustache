@@ -34,7 +34,14 @@
             <td>{{idpemail}}</td>
             <td>{{created}}</td>
             <td>{{lastseen}}</td>
-            <td><a href="manage_linked_users.php?action=unlink&link_id={{id}}" onclick="return confirm('{{#str}} manage_linked_users:confirmunlink, auth_shibboleth_link{{/str}}');">{{#str}} manage_linked_users:unlink, auth_shibboleth_link{{/str}}</a></td>
+            <td>
+                <form action="{{{actionurl}}}" method="post" style="display: inline;" onsubmit="return confirm('{{#str}} manage_linked_users:confirmunlink, auth_shibboleth_link{{/str}}');">
+                    <input type="hidden" name="action" value="unlink">
+                    <input type="hidden" name="link_id" value="{{id}}">
+                    <input type="hidden" name="sesskey" value="{{sesskey}}">
+                    <button type="submit" class="btn btn-link p-0">{{#str}} manage_linked_users:unlink, auth_shibboleth_link{{/str}}</button>
+                </form>
+            </td>
         </tr>
         {{/linked_users}}
     </tbody>
