@@ -39,6 +39,7 @@ jobs:
   # --------------------------------------------------------------------------
   test:
     runs-on: ubuntu-24.04
+    timeout-minutes: 45
 
     # Database services (only one is actually used per matrix entry).
     services:
@@ -94,6 +95,23 @@ jobs:
           echo "$(cd ci/vendor/bin; pwd)" >> "$GITHUB_PATH"
           sudo locale-gen en_AU.UTF-8
           echo "NVM_DIR=$HOME/.nvm" >> "$GITHUB_ENV"
+
+      # Allow cloning private dependency repos (git@github.com:... or https://github.com/...) with a token.
+      # The default GITHUB_TOKEN only has access to this repository, so a PAT with read access
+      # to the dependency repos is needed (repository secret BOT_GITHUB_ACTION_PAT).
+      - name: Configure git access for plugin dependencies
+        env:
+          DEPS_TOKEN: ${{ secrets.BOT_GITHUB_ACTION_PAT }}
+        run: |
+          if [ -z "$DEPS_TOKEN" ]; then
+            echo "::warning::Secret BOT_GITHUB_ACTION_PAT is not set - cloning private dependencies will fail."
+            exit 0
+          fi
+          # Remove any whitespace/newlines accidentally stored in the secret (git rejects them in config keys).
+          DEPS_TOKEN="$(printf '%s' "$DEPS_TOKEN" | tr -d '[:space:]')"
+          echo "::add-mask::$DEPS_TOKEN"
+          # Only SSH-style URLs (git@github.com:...) from .github/moodle-ci/dependencies are rewritten.
+          git config --global url."https://x-access-token:${DEPS_TOKEN}@github.com/".insteadOf "git@github.com:"
 
       # Add extra plugin dependencies if specified (either via file or override).
       - name: Add plugin dependencies
@@ -176,10 +194,12 @@ jobs:
 
       - name: PHP Copy/Paste Detector
         if: ${{ !cancelled() }}
+        timeout-minutes: 15
         run: moodle-plugin-ci phpcpd
 
       - name: PHP Mess Detector
         if: ${{ !cancelled() }}
+        timeout-minutes: 15
         run: |
           rulesfile="$(pwd)/plugin/.github/moodle-ci/phpmd-exclusions.xml"
           if [ -f "$rulesfile" ]; then
@@ -192,6 +212,7 @@ jobs:
 
       - name: Moodle Code Checker
         if: ${{ !cancelled() }}
+        timeout-minutes: 15
         run: |
           standardfile="$(pwd)/plugin/.github/moodle-ci/phpcs-exclusions.xml"
           if [ -f "$standardfile" ]; then
@@ -204,6 +225,7 @@ jobs:
 
       - name: Moodle PHPDoc Checker
         if: ${{ !cancelled() }}
+        timeout-minutes: 15
         run: moodle-plugin-ci phpdoc --max-warnings 0
 
       - name: Validating
@@ -216,14 +238,25 @@ jobs:
 
       - name: Mustache Lint
         if: ${{ !cancelled() }}
+        timeout-minutes: 15
         run: moodle-plugin-ci mustache
 
       - name: Grunt
         if: ${{ !cancelled() }}
+        timeout-minutes: 15
         run: moodle-plugin-ci grunt --max-lint-warnings 0
+
+      # If Moodle reports the PHPUnit environment as stale ("initialised for different version"),
+      # the reason is printed and the environment is initialised again instead of failing the tests.
+      - name: Ensure PHPUnit environment is current
+        if: ${{ !cancelled() }}
+        timeout-minutes: 10
+        working-directory: moodle
+        run: php public/admin/tool/phpunit/cli/util.php --diag || php public/admin/tool/phpunit/cli/init.php
 
       - name: PHPUnit tests
         if: ${{ !cancelled() }}
+        timeout-minutes: 15
         run: moodle-plugin-ci phpunit --fail-on-warning
 
       - name: Behat features
@@ -251,6 +284,7 @@ jobs:
     needs: test
     if: ${{ always() }}   # run even if tests failed, so we can fix issues
     runs-on: ubuntu-24.04
+    timeout-minutes: 45
 
     services:
       # We only need MariaDB for the fixer job (same as the test leg).
@@ -298,6 +332,23 @@ jobs:
           echo "$(cd ci/vendor/bin; pwd)" >> "$GITHUB_PATH"
           sudo locale-gen en_AU.UTF-8
           echo "NVM_DIR=$HOME/.nvm" >> "$GITHUB_ENV"
+
+      # Allow cloning private dependency repos (git@github.com:... or https://github.com/...) with a token.
+      # The default GITHUB_TOKEN only has access to this repository, so a PAT with read access
+      # to the dependency repos is needed (repository secret BOT_GITHUB_ACTION_PAT).
+      - name: Configure git access for plugin dependencies
+        env:
+          DEPS_TOKEN: ${{ secrets.BOT_GITHUB_ACTION_PAT }}
+        run: |
+          if [ -z "$DEPS_TOKEN" ]; then
+            echo "::warning::Secret BOT_GITHUB_ACTION_PAT is not set - cloning private dependencies will fail."
+            exit 0
+          fi
+          # Remove any whitespace/newlines accidentally stored in the secret (git rejects them in config keys).
+          DEPS_TOKEN="$(printf '%s' "$DEPS_TOKEN" | tr -d '[:space:]')"
+          echo "::add-mask::$DEPS_TOKEN"
+          # Only SSH-style URLs (git@github.com:...) from .github/moodle-ci/dependencies are rewritten.
+          git config --global url."https://x-access-token:${DEPS_TOKEN}@github.com/".insteadOf "git@github.com:"
 
       # Add plugin dependencies (same as test).
       - name: Add plugin dependencies
@@ -403,6 +454,7 @@ jobs:
       # ---- PHP Code Beautifier and Fixer (phpcbf) ----
       - name: Moodle Code Beautifier and Fixer
         if: ${{ !cancelled() }}
+        timeout-minutes: 15
         run: |
           standardfile="$(pwd)/plugin/.github/moodle-ci/phpcs-exclusions.xml"
           if [ -f "$standardfile" ]; then
@@ -428,14 +480,17 @@ jobs:
       # ---- ESLint --fix ----
       - name: ESLint --fix
         if: ${{ !cancelled() }}
+        timeout-minutes: 15
         run: |
+          : "${PLUGIN_INSTALL_DIR:?PLUGIN_INSTALL_DIR is not set - did the resolve step fail?}"
           cd ${{ github.workspace }}/moodle
           set +e
-          ./node_modules/.bin/eslint --fix public/
+          # Only lint the plugin - linting all of Moodle's public/ takes very long.
+          ./node_modules/.bin/eslint --fix "public/${PLUGIN_INSTALL_DIR}/"
           eslint_exit=$?
           set -e
 
-          if [ -z "$(git status --porcelain public/)" ]; then
+          if [ -z "$(git status --porcelain "public/${PLUGIN_INSTALL_DIR}/")" ]; then
             echo "ESLint --fix made no changes; propagating its exit code ($eslint_exit)."
             exit $eslint_exit
           fi
@@ -455,14 +510,17 @@ jobs:
       # ---- Stylelint --fix ----
       - name: Stylelint --fix
         if: ${{ !cancelled() }}
+        timeout-minutes: 15
         run: |
+          : "${PLUGIN_INSTALL_DIR:?PLUGIN_INSTALL_DIR is not set - did the resolve step fail?}"
           cd ${{ github.workspace }}/moodle
           set +e
-          ./node_modules/.bin/stylelint --fix "public/**/*.scss"
+          # Only lint the plugin - linting all of Moodle's public/ takes very long.
+          ./node_modules/.bin/stylelint --fix "public/${PLUGIN_INSTALL_DIR}/**/*.scss"
           stylelint_exit=$?
           set -e
 
-          if [ -z "$(git status --porcelain public/)" ]; then
+          if [ -z "$(git status --porcelain "public/${PLUGIN_INSTALL_DIR}/")" ]; then
             echo "Stylelint --fix made no changes; propagating its exit code ($stylelint_exit)."
             exit $stylelint_exit
           fi
@@ -487,6 +545,7 @@ jobs:
       # are no longer generated (they are deleted).
       - name: Rebuild AMD assets with Grunt
         if: ${{ !cancelled() }}
+        timeout-minutes: 15
         run: |
           # Check if the plugin has an amd directory.
           if [ ! -d "${{ github.workspace }}/moodle/public/${PLUGIN_INSTALL_DIR}/amd" ]; then

@@ -151,6 +151,7 @@
         PHPCS should not check them either.
     -->
     <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/composer-libraries/*</exclude-pattern>
     <exclude-pattern>*/react-app/*</exclude-pattern>
     <exclude-pattern>*/react-apps/*</exclude-pattern>
     <exclude-pattern>*/amd/build/*</exclude-pattern>
