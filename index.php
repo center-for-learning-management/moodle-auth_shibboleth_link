@@ -29,6 +29,19 @@
 require('../../config.php');
 require_once($CFG->dirroot . '/auth/shibboleth_link/classes/lib.php');
 
+// Inject mocked Shibboleth SP $_SERVER attributes exclusively during Behat UAT runs.
+if (defined('BEHAT_SITE_RUNNING')) {
+    $mockserver = get_config('auth_shibboleth_link', 'behat_mock_server');
+    if (!empty($mockserver)) {
+        $decoded = json_decode($mockserver, true);
+        if (is_array($decoded)) {
+            foreach ($decoded as $k => $v) {
+                $_SERVER[$k] = $v;
+            }
+        }
+    }
+}
+
 $linkorcreate = optional_param('linkorcreate', 0, PARAM_INT);
 $replacelink = optional_param('replacelink', 0, PARAM_INT);
 $context = context_system::instance();
@@ -51,7 +64,7 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
                 $email = floor((microtime(true) - 1689000000) * 1000) . '@a.eduvidual.at';
             }
 
-            $testuser = $DB->get_record_select('user', 'deleted=0 AND username=? OR email=?', [$email, $email]);
+            $testuser = $DB->get_record_select('user', 'deleted=0 AND (username=? OR email=?)', [$email, $email]);
 
             if ($testuser && $testuser->deleted == 0) {
                 // User already exists, use email address with firstname suffix.
@@ -162,7 +175,7 @@ if (!empty($_SERVER[$pluginconfig->user_attribute])) {
         $user = core_user::get_user($link->userid, '*', IGNORE_MISSING);
 
         if ($replacelink === 1) {
-            if ($user->auth == 'shibboleth') {
+            if (!empty($user) && $user->auth == 'shibboleth') {
                 // Sorry we can not do this!
                 $msgs[] = [
                     'type' => 'danger',
