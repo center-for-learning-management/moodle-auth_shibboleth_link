@@ -41,7 +41,8 @@ class auth_plugin_shibboleth_link extends auth_plugin_shibboleth {
      * Constructor.
      */
     public function __construct() {
-        $this->authtype = 'shibboleth_link';$this->config = get_config('auth_shibboleth');
+        $this->authtype = 'shibboleth_link';
+        $this->config = get_config('auth_shibboleth');
     }
 
     /**
@@ -68,7 +69,7 @@ class auth_plugin_shibboleth_link extends auth_plugin_shibboleth {
      * @param string $password The password (with system magic quotes)
      * @return bool Authentication success or failure.
      */
-    public function user_login($username,$password) {
+    public function user_login($username, $password) {
         return false;
     }
 
@@ -79,7 +80,8 @@ class auth_plugin_shibboleth_link extends auth_plugin_shibboleth {
      * @return array List of arrays with keys url, iconurl and name.
      */
     public function loginpage_idp_list($wantsurl) {
-        $config = get_config('auth_shibboleth');$result = [];
+        $config = get_config('auth_shibboleth');
+        $result = [];
 
         // Before displaying the button check that Shibboleth is set-up correctly.
         if (empty($config->user_attribute)) {
@@ -87,14 +89,19 @@ class auth_plugin_shibboleth_link extends auth_plugin_shibboleth {
         }
 
         $idps = explode("\n", get_config('auth_shibboleth', 'organization_selection'));
-        if (count($idps) > 0) {$idpx = explode(",", $idps[0]);$idp = trim($idpx[0]); } else {$idp = null;
+        if (count($idps) > 0) {
+            $idpx = explode(",", $idps[0]);
+            $idp = trim($idpx[0]);
+        } else {
+            $idp = null;
         }
 
-        $url = new moodle_url('/auth/shibboleth_link/login.php', ['idp' =>$idp]);
+        $url = new moodle_url('/auth/shibboleth_link/login.php', ['idp' => $idp]);
 
-        $config->login_name = 'Bildungsportal';$iconurl = new moodle_url('/local/eduvidual/pix/logo_bip-32x32.png');
+        $config->login_name = 'Bildungsportal';
+        $iconurl = new moodle_url('/local/eduvidual/pix/logo_bip-32x32.png');
 
-        $result[] = ['url' =>$url, 'iconurl' => $iconurl, 'name' =>$config->login_name];
+        $result[] = ['url' => $url, 'iconurl' => $iconurl, 'name' => $config->login_name];
         return $result;
     }
 }

@@ -62,8 +62,8 @@ final class lib_test extends \advanced_testcase {
         global $DB;
         $this->resetAfterTest();
 
-        $user1 =$this->getDataGenerator()->create_user(['firstname' => 'Max', 'lastname' => 'Mustermann']);
-        $user2 =$this->getDataGenerator()->create_user(['firstname' => 'Erika', 'lastname' => 'Musterfrau']);
+        $user1 = $this->getDataGenerator()->create_user(['firstname' => 'Max', 'lastname' => 'Mustermann']);
+        $user2 = $this->getDataGenerator()->create_user(['firstname' => 'Erika', 'lastname' => 'Musterfrau']);
 
         $params = [
             'idp' => 'https://bildung.gv.at/idp/shibboleth',
@@ -81,24 +81,32 @@ final class lib_test extends \advanced_testcase {
         $this->assertNotEmpty($linkid);
 
         // Retrieve using exact idpusername.
-        $fetched = lib::link_get($params);$this->assertNotFalse($fetched);$this->assertEquals($user1->id,$fetched->userid);
-        $this->assertEquals('Max',$fetched->idpfirstname);
-        $this->assertEquals(lib::SOURCE_USER,$fetched->source);
+        $fetched = lib::link_get($params);
+        $this->assertNotFalse($fetched);
+        $this->assertEquals($user1->id, $fetched->userid);
+        $this->assertEquals('Max', $fetched->idpfirstname);
+        $this->assertEquals(lib::SOURCE_USER, $fetched->source);
 
         // Retrieve when stored value has leading zeros stripped or vice versa.
-        $trimmedparams =$params;
-        $trimmedparams['idpusername'] = '0000987654';$fetchedtrimmed = lib::link_get($trimmedparams);$this->assertNotFalse($fetchedtrimmed);$this->assertEquals($linkid,$fetchedtrimmed->id);
+        $trimmedparams = $params;
+        $trimmedparams['idpusername'] = '0000987654';
+        $fetchedtrimmed = lib::link_get($trimmedparams);
+        $this->assertNotFalse($fetchedtrimmed);
+        $this->assertEquals($linkid, $fetchedtrimmed->id);
 
         // Re-link the same IdP identity to user2 (updates existing record rather than duplicating).
         $params['userinfo']['firstname'] = 'Erika';
-        $params['userinfo']['lastname'] = 'Musterfrau';$params['userinfo']['email'] = 'erika@example.at';
+        $params['userinfo']['lastname'] = 'Musterfrau';
+        $params['userinfo']['email'] = 'erika@example.at';
         lib::idpparams_store($params);
 
-        $updatedid = lib::link_store($user2);$this->assertEquals($linkid,$updatedid);
-        $this->assertEquals(1,$DB->count_records('auth_shibboleth_link'));
+        $updatedid = lib::link_store($user2);
+        $this->assertEquals($linkid, $updatedid);
+        $this->assertEquals(1, $DB->count_records('auth_shibboleth_link'));
 
-        $updated = lib::link_get($params);$this->assertEquals($user2->id,$updated->userid);
-        $this->assertEquals('Erika',$updated->idpfirstname);
+        $updated = lib::link_get($params);
+        $this->assertEquals($user2->id, $updated->userid);
+        $this->assertEquals('Erika', $updated->idpfirstname);
         $this->assertEquals('erika@example.at', $updated->idpemail);
     }
 
@@ -113,21 +121,23 @@ final class lib_test extends \advanced_testcase {
         set_config('field_map_lastname', 'HTTP_SN', 'auth_shibboleth');
         set_config('field_map_email', 'HTTP_MAIL', 'auth_shibboleth');
 
-        $origserver =$_SERVER;
+        $origserver = $_SERVER;
         try {
-            $_SERVER['Shib-Identity-Provider'] = 'https://bildung.gv.at/idp/shibboleth';$_SERVER['HTTP_SAMLSUBJECTID'] = 'testuser@bildung.gv.at';
+            $_SERVER['Shib-Identity-Provider'] = 'https://bildung.gv.at/idp/shibboleth';
+            $_SERVER['HTTP_SAMLSUBJECTID'] = 'testuser@bildung.gv.at';
             $_SERVER['HTTP_GIVENNAME'] = 'Georg';
-            $_SERVER['HTTP_SN'] = 'Glas';$_SERVER['HTTP_MAIL'] = 'georg@example.at';
+            $_SERVER['HTTP_SN'] = 'Glas';
+            $_SERVER['HTTP_MAIL'] = 'georg@example.at';
 
             $result = lib::idpparams_from_server();
 
-            $this->assertEquals('https://bildung.gv.at/idp/shibboleth',$result['idp']);
+            $this->assertEquals('https://bildung.gv.at/idp/shibboleth', $result['idp']);
             $this->assertEquals('testuser@bildung.gv.at', $result['idpusername']);
-            $this->assertEquals('Georg',$result['userinfo']['firstname']);
-            $this->assertEquals('Glas',$result['userinfo']['lastname']);
+            $this->assertEquals('Georg', $result['userinfo']['firstname']);
+            $this->assertEquals('Glas', $result['userinfo']['lastname']);
             $this->assertEquals('georg@example.at', $result['userinfo']['email']);
         } finally {
-            $_SERVER =$origserver;
+            $_SERVER = $origserver;
         }
     }
 
@@ -135,21 +145,40 @@ final class lib_test extends \advanced_testcase {
      * Test check_login() redirect URL calculation and Shibboleth session ID capture.
      */
     public function test_check_login_url_resolution(): void {
-        global $CFG,$SESSION;
+        global $CFG, $SESSION;
         $this->resetAfterTest();
 
-        $user =$this->getDataGenerator()->create_user([
+        $user = $this->getDataGenerator()->create_user([
             'firstname' => 'Test',
             'lastname' => 'User',
             'email' => 'test@example.at',
         ]);
         $this->setUser($user);
 
-        $origserver =$_SERVER;
+        $origserver = $_SERVER;
         try {
-            $_SERVER['Shib-Session-ID'] = '_test_shib_session_123';
+            $mocksessionid = 'mocksession123';
+            $_SERVER['Shib-Session-ID'] = $mocksessionid;
 
             // Case 1: $SESSION->wantsurl inside wwwroot is honored and cleared.
-            $SESSION->wantsurl =$CFG->wwwroot . '/course/view.php?id=42';
+            $SESSION->wantsurl = $CFG->wwwroot . '/course/view.php?id=42';
             $url = lib::check_login(false);
-            $this->assertEquals($CFG->wwwroot . '/course/view.php?id=42', $url);$this->assertObjectNotHasProperty('wantsurl', $SESSION);$this->assertEquals('_
+            $this->assertEquals($CFG->wwwroot . '/course/view.php?id=42', $url);
+            $this->assertObjectNotHasProperty('wantsurl', $SESSION);
+            $this->assertEquals($mocksessionid, $SESSION->shibboleth_session_id);
+
+            // Case 2: External wantsurl is ignored and defaults to site root or /my/.
+            $SESSION->wantsurl = 'https://evil.example.org/phish';
+            set_config('defaulthomepage', HOMEPAGE_SITE);
+            $url = lib::check_login(false);
+            $this->assertEquals($CFG->wwwroot . '/', $url);
+
+            // Case 3: HOMEPAGE_MY redirects to /my/.
+            set_config('defaulthomepage', HOMEPAGE_MY);
+            $url = lib::check_login(false);
+            $this->assertEquals($CFG->wwwroot . '/my/', $url);
+        } finally {
+            $_SERVER = $origserver;
+        }
+    }
+}
