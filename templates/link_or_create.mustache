@@ -14,6 +14,28 @@
     You should have received a copy of the GNU General Public License
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
+{{!
+    @template auth_shibboleth_link/link_or_create
+
+    Prompts the user to link their Shibboleth identity to an existing account or create a new one.
+
+    Example context (json):
+    {
+        "wwwroot": "https://example.com",
+        "asklinkorcreate": true,
+        "userexists": false,
+        "idpusername": "user@idp.example.at",
+        "isloggedin": 1,
+        "userfullname": "Max Mustermann",
+        "msgs": [],
+        "userdata": [
+            {
+                "firstname": "Max",
+                "lastname": "Mustermann"
+            }
+        ]
+    }
+}}
 
 {{#msgs}}
     {{> auth_shibboleth_link/alert}}
@@ -37,7 +59,7 @@
     </p>
 {{/userexists}}
 
-<table border="0" class="generaltable">
+<table class="generaltable">
     <tbody>
         {{#isloggedin}}
         <tr>
@@ -46,7 +68,7 @@
                     {{#pix}} i/checkpermissions {{/pix}}
                     {{#str}} auth:linkaccount, auth_shibboleth_link, { "userfullname": {{# quote }}{{ userfullname }}{{/ quote }} } {{/str}}
                 </a>
-                <br /><br />
+                <br><br>
                 {{#str}} auth:linkaccount:description, auth_shibboleth_link {{/str}}
             </td>
         </tr>
@@ -57,7 +79,7 @@
                     {{#pix}} i/cohort {{/pix}}
                     {{#str}} auth:linkotheraccount, auth_shibboleth_link {{/str}}
                 </a>
-                <br /><br />
+                <br><br>
                 {{#str}} auth:linkotheraccount:description, auth_shibboleth_link {{/str}}
             </td>
         </tr>
@@ -67,7 +89,7 @@
                     {{#pix}} i/assignroles {{/pix}}
                     {{#str}} auth:createaccount, auth_shibboleth_link, { "idpusername": {{# quote }}{{ idpusername }}{{/ quote }} } {{/str}}
                 </a>
-                <br /><br />
+                <br><br>
                 {{#str}} auth:createaccount:description, auth_shibboleth_link {{/str}}
             </td>
         </tr>

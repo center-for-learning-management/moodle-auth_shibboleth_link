@@ -15,12 +15,15 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * Admin settings for auth_shibboleth_link.
+ *
  * @package    auth_shibboleth_link
  * @copyright  2019 Zentrum für Lernmanagement (www.lernmangement.at)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die;
+
 if ($ADMIN->fulltree) {
     $settings->add(
         new admin_setting_configtext(

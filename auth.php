@@ -15,6 +15,8 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * Authentication plugin class for auth_shibboleth_link.
+ *
  * @package    auth_shibboleth_link
  * @copyright  2019 Zentrum für Lernmanagement (http://www.lernmanagement.at)
  * @author     Robert Schrenk
@@ -28,41 +30,32 @@ require_once($CFG->dirroot . '/auth/shibboleth/auth.php');
 
 /**
  * Shibboleth_link authentication plugin.
+ *
+ * @package    auth_shibboleth_link
+ * @copyright  2019 Zentrum für Lernmanagement (http://www.lernmanagement.at)
+ * @author     Robert Schrenk
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class auth_plugin_shibboleth_link extends auth_plugin_shibboleth {
-
     /**
      * Constructor.
      */
     public function __construct() {
-        $this->authtype = 'shibboleth_link';
-        $this->config = get_config('auth_shibboleth');
+        $this->authtype = 'shibboleth_link';$this->config = get_config('auth_shibboleth');
     }
 
     /**
-     * Old syntax of class constructor. Deprecated in PHP7.
-     *
-     * @deprecated since Moodle 3.1
+     * Hook for login page.
      */
-    public function auth_plugin_shibboleth_link() {
-        debugging('Use of class name as constructor is deprecated', DEBUG_DEVELOPER);
-        self::__construct();
-    }
-
-    /**
-     * Hook for login page
-     *
-     */
-    function loginpage_hook() {
+    public function loginpage_hook() {
         // We prevent a call to our parent class.
         return;
     }
 
     /**
-     * Hook for logout page
-     *
+     * Hook for logout page.
      */
-    function logoutpage_hook() {
+    public function logoutpage_hook() {
         // We prevent a call to our parent class,
         // otherwise we would double the url-modification.
         return;
@@ -75,56 +68,33 @@ class auth_plugin_shibboleth_link extends auth_plugin_shibboleth {
      * @param string $password The password (with system magic quotes)
      * @return bool Authentication success or failure.
      */
-    function user_login($username, $password) {
+    public function user_login($username,$password) {
         return false;
     }
 
     /**
      * Return a list of identity providers to display on the login page.
-     * Kopiert von auth/shibboleth
      *
      * @param string $wantsurl The requested URL.
      * @return array List of arrays with keys url, iconurl and name.
      */
     public function loginpage_idp_list($wantsurl) {
-        $config = get_config('auth_shibboleth');
-        $result = [];
+        $config = get_config('auth_shibboleth');$result = [];
 
         // Before displaying the button check that Shibboleth is set-up correctly.
         if (empty($config->user_attribute)) {
             return $result;
         }
 
-        /*
-        $url = new moodle_url('/auth/shibboleth/index.php');
-
-        if ($config->auth_logo) {
-            $iconurl = moodle_url::make_pluginfile_url(
-                context_system::instance()->id,
-                'auth_shibboleth',
-                'logo',
-                null,
-                null,
-                $config->auth_logo);
-        } else {
-            $iconurl = null;
-        }
-        */
-
         $idps = explode("\n", get_config('auth_shibboleth', 'organization_selection'));
-        if (count($idps) > 0) {
-            $idpX = explode(",", $idps[0]);
-            $idp = trim($idpX[0]);
-        } else {
-            $idp = null;
+        if (count($idps) > 0) {$idpx = explode(",", $idps[0]);$idp = trim($idpx[0]); } else {$idp = null;
         }
 
-        $url = new moodle_url('/auth/shibboleth_link/login.php', ['idp' => $idp]);
+        $url = new moodle_url('/auth/shibboleth_link/login.php', ['idp' =>$idp]);
 
-        $config->login_name = 'Bildungsportal';
-        $iconurl = new moodle_url('/local/eduvidual/pix/logo_bip-32x32.png');
+        $config->login_name = 'Bildungsportal';$iconurl = new moodle_url('/local/eduvidual/pix/logo_bip-32x32.png');
 
-        $result[] = ['url' => $url, 'iconurl' => $iconurl, 'name' => $config->login_name];
+        $result[] = ['url' =>$url, 'iconurl' => $iconurl, 'name' =>$config->login_name];
         return $result;
     }
 }

@@ -15,6 +15,8 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * Page allowing users to view and unlink their connected Shibboleth accounts.
+ *
  * @package    auth_shibboleth_link
  * @copyright  2019 Zentrum für Lernmanagement (http://www.lernmanagement.at)
  * @author     Robert Schrenk
@@ -38,7 +40,7 @@ $linked_users = $DB->get_records('auth_shibboleth_link', ['userid' => $USER->id]
 
 if ($action == 'unlink') {
     $link_id = required_param('link_id', PARAM_INT);
-    if (!$linked_users[$link_id]) {
+    if (empty($linked_users[$link_id])) {
         throw new \moodle_exception('not allowed');
     }
 

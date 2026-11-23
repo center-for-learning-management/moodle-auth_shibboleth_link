@@ -15,6 +15,8 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * Version metadata for auth_shibboleth_link.
+ *
  * @package    auth_shibboleth_link
  * @copyright  2019 Zentrum für Lernmanagement (http://www.lernmanagement.at)
  * @author     Robert Schrenk

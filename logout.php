@@ -1,14 +1,31 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-// Based on the default logout-script from moodle-source /auth/shibboleth/logout.php
-// we offer an alternative logout channel  that does not require the useraccount to be
-// of type shibboleth, but to be linked to a shibboleth-login.
+/**
+ * Shibboleth front-channel and SOAP back-channel logout handler.
+ *
+ * Based on /auth/shibboleth/logout.php to support linked accounts.
+ *
+ * @package    auth_shibboleth_link
+ * @copyright  2019 Zentrum für Lernmanagement (http://www.lernmanagement.at)
+ * @author     Robert Schrenk
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
-// Implements logout for Shibboleth authenticated users according to:
-// - https://wiki.shibboleth.net/confluence/display/SHIB2/NativeSPLogoutInitiator
-// - https://wiki.shibboleth.net/confluence/display/SHIB2/NativeSPNotify
-
-
+// phpcs:ignore moodle.Files.RequireLogin.Missing
 require_once("../../config.php");
 
 require_once($CFG->dirroot . "/auth/shibboleth/auth.php");
@@ -16,13 +33,13 @@ require_once($CFG->dirroot . "/auth/shibboleth/auth.php");
 $action = optional_param('action', '', PARAM_ALPHA);
 $redirect = optional_param('return', '', PARAM_URL);
 
-// Find out whether host supports https
+// Find out whether host supports https.
 $protocol = 'http://';
 if (is_https()) {
     $protocol = 'https://';
 }
 
-// If the shibboleth plugin is not enable, throw an exception.
+// If the shibboleth plugin is not enabled, throw an exception.
 if (!is_enabled_auth('shibboleth')) {
     throw new moodle_exception(get_string('pluginnotenabled', 'auth', 'shibboleth'));
 }
@@ -31,7 +48,7 @@ if (!is_enabled_auth('shibboleth')) {
 $inputstream = file_get_contents("php://input");
 if ($action == 'logout' && !empty($redirect)) {
     // ATTENTION: HERE IS THE DIFFERENCE TO THE DEFAULT logout.php!
-    $link = $DB->get_record('auth_shibboleth_link', array('userid' => $USER->id));
+    $link = $DB->get_record('auth_shibboleth_link', ['userid' => $USER->id]);
     if (isloggedin($USER) && ($USER->auth == 'shibboleth' || !empty($link->id))) {
         // Logout user from application.
         require_logout();
@@ -39,17 +56,13 @@ if ($action == 'logout' && !empty($redirect)) {
 
     // Finally, send user to the return URL.
     redirect($redirect);
-
 } else if (!empty($inputstream)) {
-
     // Back channel logout.
     // Set SOAP header.
     $server = new SoapServer($protocol . $_SERVER['HTTP_HOST'] . $_SERVER['PHP_SELF'] . '/LogoutNotification.wsdl');
     $server->addFunction("LogoutNotification");
     $server->handle();
-
 } else {
-
     // Return WSDL.
     header('Content-Type: text/xml');
 
@@ -76,7 +89,7 @@ For more information see:
 
     <types>
        <schema targetNamespace="urn:mace:shibboleth:2.0:sp:notify"
-           xmlns="http://www.w3.org/2000/10/XMLSchema"
+           xmlns="http://www.w3.org/2001/10/XMLSchema"
            xmlns:notify="urn:mace:shibboleth:2.0:sp:notify">
 
             <simpleType name="string">
@@ -124,15 +137,14 @@ For more information see:
 WSDL;
     exit;
 }
-/******************************************************************************/
 
 /**
- * Handles SOAP Back-channel logout notification
+ * Handles SOAP Back-channel logout notification.
  *
  * @param string $spsessionid SP-provided Shibboleth Session ID
- * @return SoapFault or void if everything was fine
+ * @return SoapFault|void SoapFault or void if everything was fine
  */
-function LogoutNotification($spsessionid) {
+function LogoutNotification($spsessionid) { // phpcs:ignore moodle.NamingConventions.ValidFunctionName.LowercaseFunction
     $sessionclass = \core\session\manager::get_handler_class();
     switch ($sessionclass) {
         case '\core\session\file':
@@ -142,5 +154,4 @@ function LogoutNotification($spsessionid) {
         default:
             throw new moodle_exception("Shibboleth logout not implemented for '$sessionclass'");
     }
-    // If no SoapFault was thrown, the function will return OK as the SP assumes.
 }

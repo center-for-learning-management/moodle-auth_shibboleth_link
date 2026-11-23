@@ -1,9 +1,31 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-// Mainly taken from auth/shibboleth/index.php
+/**
+ * Shibboleth link login and account linking handler.
+ *
+ * Mainly taken from auth/shibboleth/index.php. Designed to be redirected from moodle/login/index.php.
+ *
+ * @package    auth_shibboleth_link
+ * @copyright  2019 Zentrum für Lernmanagement (http://www.lernmanagement.at)
+ * @author     Robert Schrenk
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
-// Designed to be redirected from moodle/login/index.php
-
+// phpcs:ignore moodle.Files.RequireLogin.Missing
 require('../../config.php');
 require_once($CFG->dirroot . '/auth/shibboleth_link/classes/lib.php');
 
@@ -15,34 +37,35 @@ $PAGE->set_context($context);
 $PAGE->set_heading(get_string('pluginname', 'auth_shibboleth_link'));
 $PAGE->set_title(get_string('pluginname', 'auth_shibboleth_link'));
 $PAGE->set_pagelayout('mydashboard');
-$PAGE->set_url('/auth/shibboleth_link/index.php', array('linkorcreate' => $linkorcreate));
+$PAGE->set_url('/auth/shibboleth_link/index.php', ['linkorcreate' => $linkorcreate]);
 
 $idpparams = \auth_shibboleth_link\lib::idpparams_get();
 if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
     $link = \auth_shibboleth_link\lib::link_get($idpparams);
     switch ($linkorcreate) {
-        case \auth_shibboleth_link\lib::$ACTION_CREATE: // == 1
+        case \auth_shibboleth_link\lib::$ACTION_CREATE: // Create new account.
             // Test if a user with that email already exists.
             $email = strtolower($idpparams['userinfo']['email']);
             if (!$email) {
-                // TODO: email not set -> "pseudo" random
+                // TODO: email not set -> "pseudo" random.
                 $email = floor((microtime(true) - 1689000000) * 1000) . '@a.eduvidual.at';
             }
 
             $testuser = $DB->get_record_select('user', 'deleted=0 AND username=? OR email=?', [$email, $email]);
 
             if ($testuser && $testuser->deleted == 0) {
-                // user already exists, use emailadress with firstname suffix
+                // User already exists, use email address with firstname suffix.
                 $email = str_replace('@', '+' . strtolower($idpparams['userinfo']['firstname']) . '@', $email);
 
                 $testuser = $DB->get_record_select('user', 'deleted=0 AND username=?', [$email]);
                 if ($testuser) {
                     echo $OUTPUT->header();
-                    echo $OUTPUT->render_from_template('auth_shibboleth_link/alert', array(
+                    echo $OUTPUT->render_from_template('auth_shibboleth_link/alert', [
                         'content' => get_string('auth:createaccount:userexists_link', 'auth_shibboleth_link'),
                         'type' => 'warning',
-                        'url' => $CFG->wwwroot . '/auth/shibboleth_link/index.php?linkorcreate=' . \auth_shibboleth_link\lib::$ACTION_LINK_OTHER,
-                    ));
+                        'url' => $CFG->wwwroot . '/auth/shibboleth_link/index.php?linkorcreate=' .
+                            \auth_shibboleth_link\lib::$ACTION_LINK_OTHER,
+                    ]);
                     echo $OUTPUT->footer();
                     exit;
                 }
@@ -66,26 +89,24 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
                 complete_user_login($user);
                 \auth_shibboleth_link\lib::link_store($user);
                 $urltogo = \auth_shibboleth_link\lib::check_login(false);
-                redirect($urltogo, get_string('auth:createaccount:success', 'auth_shibboleth_link'), 0, \core\output\notification::NOTIFY_SUCCESS);
-                echo $OUTPUT->header();
-                echo $OUTPUT->render_from_template('auth_shibboleth_link/alert', array(
-                    'content' => get_string('auth:createaccount:success', 'auth_shibboleth_link'),
-                    'type' => 'success',
-                    'url' => $CFG->wwwroot . '/my',
-                ));
-                echo $OUTPUT->footer();
+                redirect(
+                    $urltogo,
+                    get_string('auth:createaccount:success', 'auth_shibboleth_link'),
+                    0,
+                    \core\output\notification::NOTIFY_SUCCESS
+                );
             } else {
                 echo $OUTPUT->header();
-                echo $OUTPUT->render_from_template('auth_shibboleth_link/alert', array(
+                echo $OUTPUT->render_from_template('auth_shibboleth_link/alert', [
                     'content' => get_string('auth:createaccount:error', 'auth_shibboleth_link'),
                     'type' => 'warning',
                     'url' => $CFG->wwwroot . '/login/index.php',
-                ));
+                ]);
                 echo $OUTPUT->footer();
             }
-
             break;
-        case \auth_shibboleth_link\lib::$ACTION_LINK_CURRENT: // == 3
+
+        case \auth_shibboleth_link\lib::$ACTION_LINK_CURRENT: // Link current logged-in account.
             if (isloggedin() && !isguestuser()) {
                 // Link user.
                 \auth_shibboleth_link\lib::link_store();
@@ -93,22 +114,24 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
                 \auth_shibboleth_link\lib::check_login();
             } else {
                 // We logged out in the meanwhile. Go to login page.
-                $SESSION->wantsurl = $CFG->wwwroot . '/auth/shibboleth_link/index.php?linkorcreate=' . \auth_shibboleth_link\lib::$ACTION_LINK_CURRENT;
+                $SESSION->wantsurl = $CFG->wwwroot . '/auth/shibboleth_link/index.php?linkorcreate=' .
+                    \auth_shibboleth_link\lib::$ACTION_LINK_CURRENT;
                 // Redirect to normal login.
                 redirect($CFG->wwwroot . '/login/index.php');
             }
             break;
-        case \auth_shibboleth_link\lib::$ACTION_LINK_OTHER: // == 2
+
+        case \auth_shibboleth_link\lib::$ACTION_LINK_OTHER: // Link another existing account.
             // Capture wantsurl before the session is destroyed by logout.
-            $wantsurl = $SESSION->wantsurl;
+            $wantsurl = $SESSION->wantsurl ?? '';
             if (isloggedin() && !isguestuser()) {
                 require_logout();
             }
-            // require_logout() startet eine neue Session, die SSO-Daten müssen dort wieder hinein.
+            // Session was recreated by require_logout(), store SSO params again.
             \auth_shibboleth_link\lib::idpparams_store($idpparams);
-            // @TODO we will loose the current SESSION->wantsurl here! we should cache it somehow!
             // Store this page as wantsurl.
-            $SESSION->wantsurl = $CFG->wwwroot . '/auth/shibboleth_link/index.php?linkorcreate=' . \auth_shibboleth_link\lib::$ACTION_LINK_CURRENT;
+            $SESSION->wantsurl = $CFG->wwwroot . '/auth/shibboleth_link/index.php?linkorcreate=' .
+                \auth_shibboleth_link\lib::$ACTION_LINK_CURRENT;
             // Redirect to normal login.
             redirect($CFG->wwwroot . '/login/index.php');
             break;
@@ -119,19 +142,20 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
 $pluginconfig = get_config('auth_shibboleth');
 $shibbolethauth = get_auth_plugin('shibboleth');
 
-// Check whether Shibboleth is configured properly
+// Check whether Shibboleth is configured properly.
 if (empty($pluginconfig->user_attribute)) {
-    print_error('shib_not_set_up_error', 'auth_shibboleth');
+    throw new \moodle_exception('shib_not_set_up_error', 'auth_shibboleth');
 }
 
-/// If we can find the Shibboleth attribute, save it in session and return to main login page
-if (!empty($_SERVER[$pluginconfig->user_attribute])) {    // Shibboleth auto-login
+// If we can find the Shibboleth attribute, save it in session and return to main login page.
+if (!empty($_SERVER[$pluginconfig->user_attribute])) {
+    // Shibboleth auto-login.
     $idpparams = \auth_shibboleth_link\lib::idpparams_from_server();
-    // immediately store data to cache.
+    // Immediately store data to cache.
     \auth_shibboleth_link\lib::idpparams_store($idpparams);
     $link = \auth_shibboleth_link\lib::link_get($idpparams);
     $asklinkorcreate = true; // Triggers if user has a decision to link account.
-    $msgs = array();
+    $msgs = [];
     if (!empty($link->userid)) {
         \auth_shibboleth_link\lib::link_log_used($link, $idpparams);
 
@@ -140,60 +164,38 @@ if (!empty($_SERVER[$pluginconfig->user_attribute])) {    // Shibboleth auto-log
         if ($replacelink === 1) {
             if ($user->auth == 'shibboleth') {
                 // Sorry we can not do this!
-                $msgs[] = array(
+                $msgs[] = [
                     'type' => 'danger',
                     'content' => get_string('auth:warning:userreplacenotallowed', 'auth_shibboleth_link'),
-                );
+                ];
                 $asklinkorcreate = false;
             } else {
-                $DB->delete_records('auth_shibboleth_link', array('id' => $link->id));
+                $DB->delete_records('auth_shibboleth_link', ['id' => $link->id]);
                 unset($link);
-                $msgs[] = array(
+                $msgs[] = [
                     'type' => 'success',
                     'content' => get_string('auth:warning:userreplaced', 'auth_shibboleth_link'),
-                );
+                ];
             }
         }
-        if ($user->deleted == 1) {
+        if (!empty($user) && $user->deleted == 1) {
             // Show an error that the linked account has gone.
-            $DB->delete_records('auth_shibboleth_link', array('id' => $link->id));
+            $DB->delete_records('auth_shibboleth_link', ['id' => $link->id]);
             unset($link);
-            $msgs[] = array(
+            $msgs[] = [
                 'type' => 'danger',
                 'content' => get_string('auth:warning:usergone', 'auth_shibboleth_link'),
-            );
+            ];
         }
 
-        if (!empty($user->id) && $user->id == $link->userid && $user->deleted == 0) {
+        if (!empty($user->id) && !empty($link) && $user->id == $link->userid && $user->deleted == 0) {
             complete_user_login($user);
             \auth_shibboleth_link\lib::check_login(count($msgs) == 0);
         }
-    } else {
-        // We check here if there is already a shibboleth_link-account with that username.
-        // $user = $DB->get_record_select('user',
-        //     "auth='shibboleth' AND deleted=0 AND ".$DB->sql_like('username', '?'),
-        // [$DB->sql_like_escape($idpparams['idpusername'])]);
-        //
-        // if (!empty($user->id) && $user->deleted == 0) {
-        //     $useparams = explode(',', get_config('auth_shibboleth_link', 'update_profile_always'));
-        //     if ($user->auth == 'shibboleth') {
-        //         $useparams = array_merge($useparams, explode(',', get_config('auth_shibboleth_link', 'update_profile_shibbonly')));
-        //     }
-        //     foreach($idpparams['userinfo'] AS $field => $value) {
-        //         if (in_array($field, $useparams)) {
-        //             $user->{$field} = $value;
-        //         }
-        //     }
-        //     $DB->update_record('user', $user);
-        //
-        //     $user = core_user::get_user($user->id);
-        //     complete_user_login($user);
-        //     \auth_shibboleth_link\lib::check_login();
-        // }
     }
 
-    $email = $idpparams['userinfo']['email'];
-    $testuser = $DB->get_record_select('user', 'deleted=0 AND username=? OR email=?', [$email, $email]);
+    $email = $idpparams['userinfo']['email'] ?? '';
+    $testuser = $DB->get_record_select('user', 'deleted=0 AND (username=? OR email=?)', [$email, $email]);
 
     // If we are here then the login did not work. Either no user at all, or it has gone.
     // Store the user info from shibboleth in the cache.
@@ -202,23 +204,28 @@ if (!empty($_SERVER[$pluginconfig->user_attribute])) {    // Shibboleth auto-log
     $PAGE->set_heading(get_string('auth:linkaccount', 'auth_shibboleth_link'));
     $PAGE->set_title(get_string('auth:linkaccount', 'auth_shibboleth_link'));
     echo $OUTPUT->header();
-    echo $OUTPUT->render_from_template('auth_shibboleth_link/link_or_create', array(
-        'userexists' => !!$testuser,
+    echo $OUTPUT->render_from_template('auth_shibboleth_link/link_or_create', [
+        'userexists' => (bool)$testuser,
         'asklinkorcreate' => $asklinkorcreate,
         'idpusername' => $idpparams['idpusername'],
         'isloggedin' => (isloggedin() && !isguestuser($USER)) ? 1 : 0,
         'msgs' => $msgs,
-        'userdata' => array($idpparams['userinfo']),
+        'userdata' => [$idpparams['userinfo']],
         'userfullname' => \fullname($USER),
         'wwwroot' => $CFG->wwwroot,
-    ));
+    ]);
     echo $OUTPUT->footer();
-
-}
-// If we can find any (user independent) Shibboleth attributes but no user
-// attributes we probably didn't receive any user attributes
-elseif (!empty($_SERVER['HTTP_SHIB_APPLICATION_ID']) || !empty($_SERVER['Shib-Application-ID'])) {
-    print_error('shib_no_attributes_error', 'auth_shibboleth', '', '\'' . $pluginconfig->user_attribute . '\', \'' . $pluginconfig->field_map_firstname . '\', \'' . $pluginconfig->field_map_lastname . '\' and \'' . $pluginconfig->field_map_email . '\'');
+} else if (!empty($_SERVER['HTTP_SHIB_APPLICATION_ID']) || !empty($_SERVER['Shib-Application-ID'])) {
+    // If we can find any (user independent) Shibboleth attributes but no user
+    // attributes we probably didn't receive any user attributes.
+    $attrs = sprintf(
+        "'%s', '%s', '%s' and '%s'",
+        $pluginconfig->user_attribute ?? '',
+        $pluginconfig->field_map_firstname ?? '',
+        $pluginconfig->field_map_lastname ?? '',
+        $pluginconfig->field_map_email ?? ''
+    );
+    throw new \moodle_exception('shib_no_attributes_error', 'auth_shibboleth', '', $attrs);
 } else {
-    print_error('shib_not_set_up_error', 'auth_shibboleth');
+    throw new \moodle_exception('shib_not_set_up_error', 'auth_shibboleth');
 }

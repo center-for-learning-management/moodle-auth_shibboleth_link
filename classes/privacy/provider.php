@@ -15,7 +15,9 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * @package    local_edumessenger
+ * Privacy Subsystem implementation for auth_shibboleth_link.
+ *
+ * @package    auth_shibboleth_link
  * @copyright  2018 Digital Education Society (http://www.dibig.at)
  * @author     Robert Schrenk
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -25,17 +27,27 @@ namespace auth_shibboleth_link\privacy;
 
 use core_privacy\local\metadata\collection;
 
-defined('MOODLE_INTERNAL') || die;
-
+/**
+ * Privacy provider for auth_shibboleth_link.
+ *
+ * @package    auth_shibboleth_link
+ * @copyright  2018 Digital Education Society (http://www.dibig.at)
+ * @author     Robert Schrenk
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class provider implements \core_privacy\local\metadata\provider {
-
+    /**
+     * Returns metadata about personal data stored by this plugin.
+     *
+     * @param collection $collection The initialised collection to add items to.
+     * @return collection A listing of user data stored through this system.
+     */
     public static function get_metadata(collection $collection): collection {
-        // Here you will add more items into the collection.
         $collection->add_database_table(
             'auth_shibboleth_link',
             [
                 'idp' => 'privacy:metadata:db:idp',
-                'idpusername' => 'privacy:metadata:db:ipdusername',
+                'idpusername' => 'privacy:metadata:db:idpusername',
                 'userid' => 'privacy:metadata:db:userid',
             ],
             'privacy:metadata:db'
