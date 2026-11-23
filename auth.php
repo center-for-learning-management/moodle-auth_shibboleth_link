@@ -68,6 +68,7 @@ class auth_plugin_shibboleth_link extends auth_plugin_shibboleth {
      * @param string $username The username (with system magic quotes)
      * @param string $password The password (with system magic quotes)
      * @return bool Authentication success or failure.
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function user_login($username, $password) {
         return false;
@@ -78,6 +79,7 @@ class auth_plugin_shibboleth_link extends auth_plugin_shibboleth {
      *
      * @param string $wantsurl The requested URL.
      * @return array List of arrays with keys url, iconurl and name.
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function loginpage_idp_list($wantsurl) {
         $config = get_config('auth_shibboleth');

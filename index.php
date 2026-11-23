@@ -56,7 +56,7 @@ $idpparams = \auth_shibboleth_link\lib::idpparams_get();
 if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
     $link = \auth_shibboleth_link\lib::link_get($idpparams);
     switch ($linkorcreate) {
-        case \auth_shibboleth_link\lib::$ACTION_CREATE: // Create new account.
+        case \auth_shibboleth_link\lib::$actioncreate: // Create new account.
             // Test if a user with that email already exists.
             $email = strtolower($idpparams['userinfo']['email']);
             if (!$email) {
@@ -77,7 +77,7 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
                         'content' => get_string('auth:createaccount:userexists_link', 'auth_shibboleth_link'),
                         'type' => 'warning',
                         'url' => $CFG->wwwroot . '/auth/shibboleth_link/index.php?linkorcreate=' .
-                            \auth_shibboleth_link\lib::$ACTION_LINK_OTHER,
+                            \auth_shibboleth_link\lib::$actionlinkother,
                     ]);
                     echo $OUTPUT->footer();
                     exit;
@@ -119,7 +119,7 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
             }
             break;
 
-        case \auth_shibboleth_link\lib::$ACTION_LINK_CURRENT: // Link current logged-in account.
+        case \auth_shibboleth_link\lib::$actionlinkcurrent: // Link current logged-in account.
             if (isloggedin() && !isguestuser()) {
                 // Link user.
                 \auth_shibboleth_link\lib::link_store();
@@ -128,13 +128,13 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
             } else {
                 // We logged out in the meanwhile. Go to login page.
                 $SESSION->wantsurl = $CFG->wwwroot . '/auth/shibboleth_link/index.php?linkorcreate=' .
-                    \auth_shibboleth_link\lib::$ACTION_LINK_CURRENT;
+                    \auth_shibboleth_link\lib::$actionlinkcurrent;
                 // Redirect to normal login.
                 redirect($CFG->wwwroot . '/login/index.php');
             }
             break;
 
-        case \auth_shibboleth_link\lib::$ACTION_LINK_OTHER: // Link another existing account.
+        case \auth_shibboleth_link\lib::$actionlinkother: // Link another existing account.
             // Capture wantsurl before the session is destroyed by logout.
             $wantsurl = $SESSION->wantsurl ?? '';
             if (isloggedin() && !isguestuser()) {
@@ -144,7 +144,7 @@ if ($linkorcreate > 0 && !empty($idpparams['idp'])) {
             \auth_shibboleth_link\lib::idpparams_store($idpparams);
             // Store this page as wantsurl.
             $SESSION->wantsurl = $CFG->wwwroot . '/auth/shibboleth_link/index.php?linkorcreate=' .
-                \auth_shibboleth_link\lib::$ACTION_LINK_CURRENT;
+                \auth_shibboleth_link\lib::$actionlinkcurrent;
             // Redirect to normal login.
             redirect($CFG->wwwroot . '/login/index.php');
             break;

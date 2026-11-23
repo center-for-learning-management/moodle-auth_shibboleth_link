@@ -29,6 +29,12 @@
  * @param int $oldversion The version we are upgrading from.
  * @return bool True on success.
  */
+/**
+ * Execute auth_shibboleth_link upgrade from the given old version.
+ *
+ * @param int $oldversion
+ * @return bool
+ */
 function xmldb_auth_shibboleth_link_upgrade($oldversion) {
     global $DB;
     $dbman = $DB->get_manager();

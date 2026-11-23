@@ -35,11 +35,11 @@ namespace auth_shibboleth_link;
  */
 class lib {
     /** @var int Action code to create a new local account. */
-    public static $ACTION_CREATE = 1; // phpcs:ignore moodle.NamingConventions.ValidVariableName.MemberNameLowerCase
+    public const ACTION_CREATE = 1;
     /** @var int Action code to link to another existing local account. */
-    public static $ACTION_LINK_OTHER = 2; // phpcs:ignore moodle.NamingConventions.ValidVariableName.MemberNameLowerCase
+    public const ACTION_LINK_OTHER = 2;
     /** @var int Action code to link to the currently logged-in local account. */
-    public static $ACTION_LINK_CURRENT = 3; // phpcs:ignore moodle.NamingConventions.ValidVariableName.MemberNameLowerCase
+    public const ACTION_LINK_CURRENT = 3;
 
     /** @var int Link modified by user self-service. */
     public const SOURCE_USER = 0;

@@ -31,6 +31,7 @@
  * @param bool $iscurrentuser True if viewing own profile.
  * @param stdClass|null $course Course object if applicable.
  * @return void
+ * @SuppressWarnings(PHPMD.UnusedFormalParameter)
  */
 function auth_shibboleth_link_myprofile_navigation(core_user\output\myprofile\tree $tree, $user, $iscurrentuser, $course) {
     if ($iscurrentuser) {

@@ -32,7 +32,7 @@ namespace auth_shibboleth_link;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers     \auth_shibboleth_link\lib
  */
-final class lib_test extends \advanced_testcase {
+class lib_test extends dvanced_testcase {
     /**
      * Test storing and retrieving IdP parameters in $SESSION.
      */
@@ -164,7 +164,7 @@ final class lib_test extends \advanced_testcase {
             $SESSION->wantsurl = $CFG->wwwroot . '/course/view.php?id=42';
             $url = lib::check_login(false);
             $this->assertEquals($CFG->wwwroot . '/course/view.php?id=42', $url);
-            $this->assertObjectNotHasProperty('wantsurl', $SESSION);
+            $this->assertFalse(property_exists($SESSION, 'wantsurl'));
             $this->assertEquals($mocksessionid, $SESSION->shibboleth_session_id);
 
             // Case 2: External wantsurl is ignored and defaults to site root or /my/.
