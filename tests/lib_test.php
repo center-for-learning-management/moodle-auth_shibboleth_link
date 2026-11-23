@@ -32,7 +32,7 @@ namespace auth_shibboleth_link;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers     \auth_shibboleth_link\lib
  */
-class lib_test extends dvanced_testcase {
+class lib_test extends \advanced_testcase {
     /**
      * Test storing and retrieving IdP parameters in $SESSION.
      */
