@@ -159,7 +159,7 @@ class lib {
      */
     public static function idpparams_store($idpparams) {
         global $SESSION;
-        // $SESSION übersteht complete_user_login(), nur nach require_logout() muss neu gespeichert werden.
+        // Die $SESSION übersteht complete_user_login(), nur nach require_logout() muss neu gespeichert werden.
         $SESSION->auth_shibboleth_link_idpparams = $idpparams;
     }
 
