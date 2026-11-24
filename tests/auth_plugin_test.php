@@ -84,7 +84,7 @@ final class auth_plugin_test extends \advanced_testcase {
         global $CFG;
         $plugindir = $CFG->dirroot . '/auth/shibboleth_link';
 
-        // #20: Ensure any header('Location:') call is immediately followed by exit; so execution never continues.
+        // Issue #20: Ensure any header('Location:') call is immediately followed by exit; so execution never continues.
         $phpfiles = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($plugindir));
         foreach ($phpfiles as $file) {
             if ($file->getExtension() !== 'php' || strpos($file->getPathname(), '/tests/') !== false) {
@@ -102,7 +102,7 @@ final class auth_plugin_test extends \advanced_testcase {
             }
         }
 
-        // #17: Ensure manage_linked_users.php enforces require_sesskey() on unlink.
+        // Issue #17: Ensure manage_linked_users.php enforces require_sesskey() on unlink.
         $managecode = file_get_contents($plugindir . '/manage_linked_users.php');
         $this->assertStringContainsString('require_sesskey();', $managecode);
     }
