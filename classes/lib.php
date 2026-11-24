@@ -67,8 +67,13 @@ class lib {
             // Only allow php files inside dirroot (no path traversal).
             $path = realpath($CFG->dirroot . '/' . $hook);
             $root = realpath($CFG->dirroot);
-            if ($path !== false && $root !== false && strpos($path, $root . DIRECTORY_SEPARATOR) === 0
-                    && substr($path, -4) === '.php' && is_file($path)) {
+            if (
+                $path !== false &&
+                $root !== false &&
+                strpos($path, $root . DIRECTORY_SEPARATOR) === 0 &&
+                substr($path, -4) === '.php' &&
+                is_file($path)
+            ) {
                 require_once($path);
             }
         }
