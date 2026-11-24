@@ -20,8 +20,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
-        with:
-          path: plugin
 
       # Read the plugin's frankenstyle component (e.g. "local_experience")
       # from version.php so the composer package name doesn't have to be
@@ -29,7 +27,7 @@ jobs:
       - name: Extract plugin component
         id: component
         run: |
-          component=$(grep -oP "\\\$plugin->component\s*=\s*'\K[^']+" plugin/version.php)
+          component=$(grep -oP "\\\$plugin->component\s*=\s*'\K[^']+" version.php)
           if [ -z "$component" ]; then
             echo "::error::Could not find \$plugin->component in version.php"
             exit 1
@@ -43,7 +41,6 @@ jobs:
         env:
           COMPONENT: ${{ steps.component.outputs.component }}
         run: |
-          cd plugin
           package_name="${COMPONENT/_//}"
           cat > composer.json <<EOF
           {
@@ -56,12 +53,10 @@ jobs:
 
       - name: Psalm Security Scan
         uses: docker://ghcr.io/psalm/psalm-security-scan
-        with:
-          working_dir: plugin
 
-      - name: Upload Psalm SARIF results
+      - name: Publish Psalm SARIF results
         if: ${{ !cancelled() }}
-        uses: github/codeql-action/upload-sarif@v4
+        uses: ./.github/actions/publish-sarif
         with:
-          sarif_file: plugin/results.sarif
+          sarif-path: results.sarif
           category: psalm

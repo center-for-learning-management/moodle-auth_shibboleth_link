@@ -1,0 +1,102 @@
+name: Publish SARIF (Upload or Annotate)
+description: Uploads SARIF to GitHub Code Scanning if GHAS is available, otherwise emits workflow annotations.
+
+inputs:
+  sarif-path:
+    description: Path to a SARIF file or directory containing .sarif files
+    required: true
+  category:
+    description: Code Scanning category (e.g. /language:actions)
+    required: false
+    default: ""
+  fail-on-findings:
+    description: Exit with code 1 when annotations are emitted and findings exist
+    required: false
+    default: "true"
+  path-prefix:
+    description: Optional path prefix to strip from SARIF file locations (e.g. plugin/)
+    required: false
+    default: ""
+  token:
+    description: GitHub token used to check repository GHAS status
+    required: false
+    default: ${{ github.token }}
+
+runs:
+  using: composite
+  steps:
+    - name: Check if GitHub Advanced Security is enabled
+      id: ghas
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+      run: |
+        STATUS=$(gh api "repos/${{ github.repository }}" --jq '
+          if .visibility == "public" then "enabled"
+          else (.security_and_analysis.advanced_security.status // "disabled")
+          end
+        ' 2>/dev/null || echo "disabled")
+        echo "enabled=$([ "$STATUS" = "enabled" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+    - name: Upload SARIF to GitHub Code Scanning
+      id: upload
+      if: steps.ghas.outputs.enabled == 'true'
+      continue-on-error: true
+      uses: github/codeql-action/upload-sarif@v4
+      with:
+        sarif_file: ${{ inputs.sarif-path }}
+        category: ${{ inputs.category }}
+
+    - name: Emit SARIF findings as GitHub annotations (fallback)
+      if: steps.ghas.outputs.enabled != 'true' || steps.upload.outcome == 'failure'
+      shell: bash
+      env:
+        SARIF_PATH: ${{ inputs.sarif-path }}
+        FAIL_ON_FINDINGS: ${{ inputs.fail-on-findings }}
+        PATH_PREFIX: ${{ inputs.path-prefix }}
+      run: |
+        python3 - << 'EOF'
+        import glob, json, os, sys
+
+        target = os.environ["SARIF_PATH"]
+        fail_on_findings = os.environ.get("FAIL_ON_FINDINGS", "true").lower() == "true"
+        prefix = os.environ.get("PATH_PREFIX", "")
+        files = [target] if os.path.isfile(target) else glob.glob(os.path.join(target, "*.sarif"))
+
+        if not files:
+            print(f"::warning::No SARIF files found at '{target}'.")
+            sys.exit(0)
+
+        findings = 0
+        for path in files:
+            with open(path, encoding="utf-8") as f:
+                sarif = json.load(f)
+            for run in sarif.get("runs", []):
+                rules = {
+                    r["id"]: r
+                    for r in run.get("tool", {}).get("driver", {}).get("rules", [])
+                }
+                for res in run.get("results", []):
+                    findings += 1
+                    rule_id = res.get("ruleId", "scan")
+                    msg = res.get("message", {}).get("text", "").replace("\n", " ")
+                    level = res.get("level") or rules.get(rule_id, {}).get("defaultConfiguration", {}).get("level", "warning")
+                    gh_level = "error" if level == "error" else "warning"
+
+                    loc = (res.get("locations") or [{}])[0].get("physicalLocation", {})
+                    file_path = loc.get("artifactLocation", {}).get("uri", "")
+                    if prefix and file_path.startswith(prefix):
+                        file_path = file_path[len(prefix):]
+                    region = loc.get("region", {})
+                    line = region.get("startLine", 1)
+                    col = region.get("startColumn", 1)
+
+                    print(f"::{gh_level} file={file_path},line={line},col={col},title={rule_id}::{msg}")
+
+        if findings > 0:
+            print(f"Found {findings} security/lint alert(s).")
+            if fail_on_findings:
+                sys.exit(1)
+        else:
+            print(f"No security or lint findings detected across {len(files)} SARIF file(s).")
+        EOF

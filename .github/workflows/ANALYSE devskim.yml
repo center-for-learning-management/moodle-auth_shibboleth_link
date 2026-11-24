@@ -24,7 +24,9 @@ jobs:
       - name: Run DevSkim scanner
         uses: microsoft/DevSkim-Action@v1
 
-      - name: Upload DevSkim scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v4
+      - name: Publish DevSkim SARIF results
+        if: ${{ !cancelled() }}
+        uses: ./.github/actions/publish-sarif
         with:
-          sarif_file: devskim-results.sarif
+          sarif-path: devskim-results.sarif
+          category: devskim
