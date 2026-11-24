@@ -118,7 +118,7 @@ class behat_auth_shibboleth_link extends behat_base {
             );
         }
         $button->click();
-        $this->getSession()->getDriver()->getWebDriverSession()->accept_alert();
+        $this->getSession()->getDriver()->getWebDriver()->switchTo()->alert()->accept();
     }
 
     /**
