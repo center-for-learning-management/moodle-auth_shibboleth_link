@@ -35,7 +35,7 @@ permissions:
 
 jobs:
   # --------------------------------------------------------------------------
-  # TEST JOB – runs all checks
+  # TEST JOB â€“ runs all checks
   # --------------------------------------------------------------------------
   test:
     runs-on: ubuntu-24.04
@@ -88,7 +88,7 @@ jobs:
       # Install moodle-plugin-ci tool and its dependencies.
       - name: Initialise moodle-plugin-ci
         env:
-          COMPOSER_AUTH: '{"github-oauth": {"github.com": "${{secrets.github_token}}"} }'
+          COMPOSER_AUTH: '{"github-oauth": {"github.com": "${{secrets.GITHUB_TOKEN}}"} }'
         run: |
           composer create-project -n --no-dev --prefer-dist moodlehq/moodle-plugin-ci ci ^4
           echo "$(cd ci/bin; pwd)" >> "$GITHUB_PATH"
@@ -278,7 +278,7 @@ jobs:
         run: exit 1
 
   # --------------------------------------------------------------------------
-  # FIX-AND-PR JOB – runs once after all test legs finish
+  # FIX-AND-PR JOB â€“ runs once after all test legs finish
   # --------------------------------------------------------------------------
   fix-and-pr:
     needs: test
@@ -325,7 +325,7 @@ jobs:
       # Initialise moodle-plugin-ci (same as test job).
       - name: Initialise moodle-plugin-ci
         env:
-          COMPOSER_AUTH: '{"github-oauth": {"github.com": "${{secrets.github_token}}"} }'
+          COMPOSER_AUTH: '{"github-oauth": {"github.com": "${{secrets.GITHUB_TOKEN}}"} }'
         run: |
           composer create-project -n --no-dev --prefer-dist moodlehq/moodle-plugin-ci ci ^4
           echo "$(cd ci/bin; pwd)" >> "$GITHUB_PATH"
