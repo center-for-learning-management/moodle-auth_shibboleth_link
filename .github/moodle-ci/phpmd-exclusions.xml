@@ -31,4 +31,9 @@
             <property name="minimum" value="1000"/>
         </properties>
     </rule>
+    <rule ref="rulesets/unusedcode.xml/UnusedFormalParameter">
+        <exclude-pattern>*/auth.php</exclude-pattern>
+        <exclude-pattern>*/lib.php</exclude-pattern>
+    </rule>
 </ruleset>
+

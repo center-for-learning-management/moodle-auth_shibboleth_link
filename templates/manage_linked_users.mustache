@@ -14,8 +14,28 @@
     You should have received a copy of the GNU General Public License
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
+{{!
+    @template auth_shibboleth_link/manage_linked_users
 
-<table border="0" class="generaltable">
+    Displays the list of Shibboleth identities linked to the current user's Moodle account.
+
+    Example context (json):
+    {
+        "linked_users": [
+            {
+                "id": 1,
+                "idp": "bildung.gv.at",
+                "idpfirstname": "Max",
+                "idplastname": "Mustermann",
+                "idpemail": "max@example.at",
+                "created": "Monday, 1 January 2026, 10:00 AM",
+                "lastseen": "Tuesday, 24 November 2026, 12:00 AM"
+            }
+        ]
+    }
+}}
+
+<table class="generaltable">
     <thead>
         <tr>
             <th scope="col">{{#str}} manage_linked_users:idp, auth_shibboleth_link {{/str}}</th>
@@ -34,7 +54,7 @@
             <td>{{idpemail}}</td>
             <td>{{created}}</td>
             <td>{{lastseen}}</td>
-            <td><a href="manage_linked_users.php?action=unlink&link_id={{id}}" onclick="return confirm('{{#str}} manage_linked_users:confirmunlink, auth_shibboleth_link{{/str}}');">{{#str}} manage_linked_users:unlink, auth_shibboleth_link{{/str}}</a></td>
+            <td><a href="manage_linked_users.php?action=unlink&amp;link_id={{id}}" onclick="return confirm('{{#str}} manage_linked_users:confirmunlink, auth_shibboleth_link{{/str}}');">{{#str}} manage_linked_users:unlink, auth_shibboleth_link{{/str}}</a></td>
         </tr>
         {{/linked_users}}
     </tbody>

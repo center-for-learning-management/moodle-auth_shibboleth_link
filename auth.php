@@ -15,6 +15,8 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * Authentication plugin class for auth_shibboleth_link.
+ *
  * @package    auth_shibboleth_link
  * @copyright  2019 Zentrum für Lernmanagement (http://www.lernmanagement.at)
  * @author     Robert Schrenk
@@ -28,9 +30,13 @@ require_once($CFG->dirroot . '/auth/shibboleth/auth.php');
 
 /**
  * Shibboleth_link authentication plugin.
+ *
+ * @package    auth_shibboleth_link
+ * @copyright  2019 Zentrum für Lernmanagement (http://www.lernmanagement.at)
+ * @author     Robert Schrenk
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class auth_plugin_shibboleth_link extends auth_plugin_shibboleth {
-
     /**
      * Constructor.
      */
@@ -40,29 +46,17 @@ class auth_plugin_shibboleth_link extends auth_plugin_shibboleth {
     }
 
     /**
-     * Old syntax of class constructor. Deprecated in PHP7.
-     *
-     * @deprecated since Moodle 3.1
+     * Hook for login page.
      */
-    public function auth_plugin_shibboleth_link() {
-        debugging('Use of class name as constructor is deprecated', DEBUG_DEVELOPER);
-        self::__construct();
-    }
-
-    /**
-     * Hook for login page
-     *
-     */
-    function loginpage_hook() {
+    public function loginpage_hook() {
         // We prevent a call to our parent class.
         return;
     }
 
     /**
-     * Hook for logout page
-     *
+     * Hook for logout page.
      */
-    function logoutpage_hook() {
+    public function logoutpage_hook() {
         // We prevent a call to our parent class,
         // otherwise we would double the url-modification.
         return;
@@ -75,13 +69,12 @@ class auth_plugin_shibboleth_link extends auth_plugin_shibboleth {
      * @param string $password The password (with system magic quotes)
      * @return bool Authentication success or failure.
      */
-    function user_login($username, $password) {
+    public function user_login($username, $password) {
         return false;
     }
 
     /**
      * Return a list of identity providers to display on the login page.
-     * Kopiert von auth/shibboleth
      *
      * @param string $wantsurl The requested URL.
      * @return array List of arrays with keys url, iconurl and name.
@@ -95,26 +88,10 @@ class auth_plugin_shibboleth_link extends auth_plugin_shibboleth {
             return $result;
         }
 
-        /*
-        $url = new moodle_url('/auth/shibboleth/index.php');
-
-        if ($config->auth_logo) {
-            $iconurl = moodle_url::make_pluginfile_url(
-                context_system::instance()->id,
-                'auth_shibboleth',
-                'logo',
-                null,
-                null,
-                $config->auth_logo);
-        } else {
-            $iconurl = null;
-        }
-        */
-
         $idps = explode("\n", get_config('auth_shibboleth', 'organization_selection'));
         if (count($idps) > 0) {
-            $idpX = explode(",", $idps[0]);
-            $idp = trim($idpX[0]);
+            $idpx = explode(",", $idps[0]);
+            $idp = trim($idpx[0]);
         } else {
             $idp = null;
         }

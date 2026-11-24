@@ -15,28 +15,33 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * Core navigation callbacks for auth_shibboleth_link.
+ *
  * @package    auth_shibboleth_link
  * @copyright  2019 Zentrum für Lernmanagement (http://www.lernmanagement.at)
  * @author     Robert Schrenk
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
- * Extend users profile
- * @param \core_user\output\myprofile\tree $tree Tree object
- * @param stdClass $user User object
- * @param bool $iscurrentuser
- * @param stdClass $course Course object
- * @return bool
+ * Adds a link to manage connected Shibboleth accounts in the user profile navigation.
+ *
+ * @param core_user\output\myprofile\tree $tree Navigation tree.
+ * @param stdClass $user User object.
+ * @param bool $iscurrentuser True if viewing own profile.
+ * @param stdClass|null $course Course object if applicable.
+ * @return void
  */
-function auth_shibboleth_link_myprofile_navigation($tree, $user, $iscurrentuser, $course) {
+function auth_shibboleth_link_myprofile_navigation(core_user\output\myprofile\tree $tree, $user, $iscurrentuser, $course) {
     if ($iscurrentuser) {
-        // var_dump(get_class_methods($tree));
-        $category = $tree->categories['loginactivity'];
-
-        $node = new \core_user\output\myprofile\node('loginactivity', 'manage_linked_users', get_string('manage_linked_users', 'auth_shibboleth_link'), null, new \moodle_url('/auth/shibboleth_link/manage_linked_users.php'));
-        $category->add_node($node);
+        $url = new moodle_url('/auth/shibboleth_link/manage_linked_users.php');
+        $node = new core_user\output\myprofile\node(
+            'loginactivity',
+            'shibboleth_link',
+            get_string('manage_linked_users', 'auth_shibboleth_link'),
+            null,
+            $url
+        );
+        $tree->add_node($node);
     }
 }

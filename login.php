@@ -1,6 +1,31 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-// Mainly taken from auth/shibboleth/login.php
+/**
+ * Shibboleth link login and IdP selection page.
+ *
+ * Mainly taken from auth/shibboleth/login.php.
+ *
+ * @package    auth_shibboleth_link
+ * @copyright  2019 Zentrum für Lernmanagement (http://www.lernmanagement.at)
+ * @author     Robert Schrenk
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+// phpcs:ignore moodle.Files.RequireLogin.Missing
 require_once("../../config.php");
 require_once($CFG->dirroot . "/auth/shibboleth/auth.php");
 
@@ -17,17 +42,17 @@ if (!empty($wantsurl)) {
         throw new moodle_exception('invalid_wantsurl');
     }
 
-    // Note: wants url should always be a complete url including host
-    // because other moodle logic depends on this
+    // Note: wantsurl should always be a complete url including host
+    // because other moodle logic depends on this.
     $SESSION->wantsurl = $wantsurl->out(false);
 }
 
 // Check for timed out sessions.
 if (!empty($SESSION->has_timed_out)) {
-    $session_has_timed_out = true;
+    $sessionhastimedout = true;
     $SESSION->has_timed_out = false;
 } else {
-    $session_has_timed_out = false;
+    $sessionhastimedout = false;
 }
 
 // Define variables used in page.
@@ -40,7 +65,7 @@ $loginurl = (!empty($CFG->alternateloginurl)) ? $CFG->alternateloginurl : '';
 
 $config = get_config('auth_shibboleth');
 $loginpath = get_config('auth_shibboleth_link', 'loginpath');
-if (!empty($CFG->registerauth) or is_enabled_auth('none') or !empty($config->auth_instructions)) {
+if (!empty($CFG->registerauth) || is_enabled_auth('none') || !empty($config->auth_instructions)) {
     $showinstructions = true;
 } else {
     $showinstructions = false;
@@ -49,7 +74,7 @@ if (!empty($CFG->registerauth) or is_enabled_auth('none') or !empty($config->aut
 $idplist = get_idp_list($config->organization_selection);
 if (isset($idp)) {
     if (!isset($idplist[$idp])) {
-        // ersten idp auswählen, der matcht
+        // Select the first matching IdP.
         foreach ($idplist as $idpurl => $tmp) {
             if (strpos($idpurl, $idp) !== false) {
                 $idp = $idpurl;
@@ -61,7 +86,7 @@ if (isset($idp)) {
     if (isset($idplist[$idp])) {
         set_saml_cookie($idp);
 
-        $targeturl = new moodle_url('/auth/shibboleth_link/index.php', array('replacelink' => $replacelink));
+        $targeturl = new moodle_url('/auth/shibboleth_link/index.php', ['replacelink' => $replacelink]);
         $idpinfo = $idplist[$idp];
 
         // Redirect to SessionInitiator with entityID as argument.
@@ -72,7 +97,6 @@ if (isset($idp)) {
         }
         // For Shibboleth 1.x Service Providers.
         header('Location: ' . $sso . '?providerId=' . urlencode($idp) . '&target=' . urlencode($targeturl->out()));
-
     } else {
         $isvalid = false;
     }
@@ -87,21 +111,10 @@ $PAGE->set_title("$site->fullname: $loginsite");
 $PAGE->set_heading($site->fullname);
 $PAGE->set_pagelayout('login');
 
-if (empty($embed))
+if (empty($embed)) {
     echo $OUTPUT->header();
+}
 
-/*
-if (isloggedin() and !isguestuser()) {
-    // Prevent logging when already logged in, we do not want them to relogin by accident because sesskey would be changed.
-    echo $OUTPUT->box_start();
-
-    $params = array('sesskey' => sesskey(), 'loginpage' => 1);
-    $logout = new single_button(new moodle_url('/login/logout.php', $params), get_string('logout'), 'post');
-    $continue = new single_button(new moodle_url('/'), get_string('cancel'), 'get');
-    echo $OUTPUT->confirm(get_string('alreadyloggedin', 'error', fullname($USER)), $logout, $continue);
-    echo $OUTPUT->box_end();
-} else {
-*/
 // Print login page.
 $selectedidp = '-';
 if (isset($_COOKIE['_saml_idp'])) {
@@ -143,7 +156,6 @@ $templatedata = (object)[
     'idps' => $idps,
     'instructions' => $instructions,
     'loginname' => 'edu.IDAM',
-    //'loginname' => $config->login_name ?? null,
     'logintoken' => \core\session\manager::get_login_token(),
     'loginurl' => new moodle_url('/auth/shibboleth_link/login.php'),
     'showinstructions' => $showinstructions,
@@ -156,6 +168,7 @@ $templatedata = (object)[
 
 // Render the login form.
 echo $OUTPUT->render_from_template('auth_shibboleth_link/login_form', $templatedata);
-//}
-if (empty($embed))
+
+if (empty($embed)) {
     echo $OUTPUT->footer();
+}
