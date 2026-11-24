@@ -45,14 +45,14 @@ Feature: Shibboleth link account creation, linking, and error handling
       | HTTP_SAMLSUBJECTID     | erika.linked@bildung.gv.at           |
       | HTTP_GIVENNAME         | Erika                                |
       | HTTP_SN                | Musterfrau                           |
-      | HTTP_MAIL              | erika@example.at                     |
+      | HTTP_MAIL              | erika.idp@bildung.gv.at              |
     And I log in as "existing"
     When I complete the Shibboleth login callback
     Then I should see "Link current account"
     When I follow "Link current account"
     And I am on "/auth/shibboleth_link/manage_linked_users.php"
     Then I should see "bildung.gv.at"
-    And I should see "erika@example.at"
+    And I should see "erika.idp@bildung.gv.at"
 
   @javascript
   Scenario: Missing Shibboleth user attribute renders Moodle exception instead of fatal error

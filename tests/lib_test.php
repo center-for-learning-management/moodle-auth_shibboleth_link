@@ -67,7 +67,7 @@ final class lib_test extends \advanced_testcase {
 
         $params = [
             'idp' => 'https://bildung.gv.at/idp/shibboleth',
-            'idpusername' => '00987654',
+            'idpusername' => '987654',
             'userinfo' => [
                 'firstname' => 'Max',
                 'lastname' => 'Mustermann',

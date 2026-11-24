@@ -174,13 +174,14 @@ class lib {
 
         // Compare idpusername case sensitive!
         $idpusernamewhere = $DB->sql_equal('idpusername', '?');
+        $trimmedcolwhere = $DB->sql_equal("TRIM(LEADING '0' FROM idpusername)", '?');
         $sql = "SELECT *
                     FROM {auth_shibboleth_link}
                     WHERE idp = ?
                         AND (
                             {$idpusernamewhere}
                             OR
-                            {$idpusernamewhere}
+                            {$trimmedcolwhere}
                         )";
         $dbparams = [
             $idpparams['idp'],

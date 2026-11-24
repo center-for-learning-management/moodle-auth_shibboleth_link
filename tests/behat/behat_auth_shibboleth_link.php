@@ -54,6 +54,6 @@ class behat_auth_shibboleth_link extends behat_base {
      * @When /^I complete the Shibboleth login callback$/
      */
     public function i_complete_the_shibboleth_login_callback(): void {
-        $this->execute('behat_general::i_visit', ['/auth/shibboleth_link/index.php']);
+        $this->getSession()->visit($this->locate_path('/auth/shibboleth_link/index.php'));
     }
 }
