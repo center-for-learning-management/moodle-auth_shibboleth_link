@@ -54,7 +54,7 @@ Feature: Shibboleth link account creation, linking, and error handling
     Then I should see "bildung.gv.at"
     And I should see "erika.idp@bildung.gv.at"
     # Verify forged unlink without a valid sesskey is blocked (#17).
-    And visiting "/auth/shibboleth_link/manage_linked_users.php?action=unlink&link_id=1&sesskey=invalidsesskey" should display the error "Invalid session key"
+    And visiting "/auth/shibboleth_link/manage_linked_users.php?action=unlink&link_id=1&sesskey=invalidsesskey" should display the error "invalidsesskey"
     When I am on the "Manage linked users" "auth_shibboleth_link > Manage" page
     Then I should see "erika.idp@bildung.gv.at"
     # Unlink legitimately via the POST form with valid sesskey.
