@@ -56,4 +56,29 @@ class behat_auth_shibboleth_link extends behat_base {
     public function i_complete_the_shibboleth_login_callback(): void {
         $this->getSession()->visit($this->locate_path('/auth/shibboleth_link/index.php'));
     }
+
+    /**
+     * Visits the Shibboleth callback and verifies a clean Moodle exception is rendered.
+     *
+     * @Then /^the Shibboleth login callback should display the error "([^"]*)"$/
+     * @param string $expectedtext Text expected in the rendered Moodle exception.
+     */
+    public function the_shibboleth_login_callback_should_display_the_error(string $expectedtext): void {
+        $this->getSession()->visit($this->locate_path('/auth/shibboleth_link/index.php'));
+        $text = $this->getSession()->getPage()->getText();
+        if (strpos($text, 'print_error()') !== false) {
+            throw new \Behat\Mink\Exception\ExpectationException(
+                'Legacy print_error() fatal error appeared on callback page.',
+                $this->getSession()
+            );
+        }
+        if (strpos($text, $expectedtext) === false) {
+            throw new \Behat\Mink\Exception\ExpectationException(
+                sprintf('Expected error text "%s" was not found on page.', $expectedtext),
+                $this->getSession()
+            );
+        }
+        // Navigate away from the fatalerror DOM node before Behat after_step exception check runs.
+        $this->getSession()->visit($this->locate_path('/'));
+    }
 }

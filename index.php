@@ -208,7 +208,9 @@ if (!empty($_SERVER[$pluginconfig->user_attribute])) {
     }
 
     $email = $idpparams['userinfo']['email'] ?? '';
-    $testuser = $DB->get_record_select('user', 'deleted=0 AND (username=? OR email=?)', [$email, $email]);
+    $testuser = !empty($email)
+        ? $DB->get_record_select('user', 'deleted=0 AND (username=? OR email=?)', [$email, $email])
+        : false;
 
     // If we are here then the login did not work. Either no user at all, or it has gone.
     // Store the user info from shibboleth in the cache.

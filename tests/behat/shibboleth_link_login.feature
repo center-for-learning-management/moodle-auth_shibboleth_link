@@ -14,7 +14,7 @@ Feature: Shibboleth link account creation, linking, and error handling
       | auth                | shibboleth,shibboleth_link,manual |                 |
     And the following "users" exist:
       | username | password | firstname | lastname   | email            |
-      | existing | Test123! | Erika     | Musterfrau | erika@example.at |
+      | existing | existing | Erika     | Musterfrau | erika@example.at |
 
   @javascript
   Scenario: First-time Shibboleth user creates a new local account and auto-logs in on next visit
@@ -58,6 +58,4 @@ Feature: Shibboleth link account creation, linking, and error handling
   Scenario: Missing Shibboleth user attribute renders Moodle exception instead of fatal error
     Given the Shibboleth SP provides the following attributes:
       | Shib-Application-ID | default |
-    When I complete the Shibboleth login callback
-    Then I should not see "Call to undefined function print_error()"
-    And I should see "HTTP_SAMLSUBJECTID"
+    Then the Shibboleth login callback should display the error "HTTP_SAMLSUBJECTID"
