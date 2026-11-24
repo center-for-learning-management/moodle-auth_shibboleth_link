@@ -50,7 +50,7 @@ Feature: Shibboleth link account creation, linking, and error handling
     When I complete the Shibboleth login callback
     Then I should see "Link current account"
     When I follow "Link current account"
-    And I am on "/auth/shibboleth_link/manage_linked_users.php"
+    And I am on the "Manage linked users" "auth_shibboleth_link > Manage" page
     Then I should see "bildung.gv.at"
     And I should see "erika.idp@bildung.gv.at"
 

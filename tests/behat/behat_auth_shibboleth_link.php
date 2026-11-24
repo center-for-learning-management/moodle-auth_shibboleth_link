@@ -81,4 +81,22 @@ class behat_auth_shibboleth_link extends behat_base {
         // Navigate away from the fatalerror DOM node before Behat after_step exception check runs.
         $this->getSession()->visit($this->locate_path('/'));
     }
+
+    /**
+     * Convert page names to URLs for steps like 'When I am on the "[identifier]" "[page type]" page'.
+     *
+     * @param string $type identifies which type of page this is, e.g. 'Manage'.
+     * @param string $identifier identifies the particular page (unused here, e.g. 'Manage linked users').
+     * @return moodle_url the corresponding URL.
+     * @throws Exception with a meaningful error message if the specified page cannot be found.
+     */
+    protected function resolve_page_instance_url(string $type, string $identifier): moodle_url {
+        switch (strtolower($type)) {
+            case 'manage':
+                return new moodle_url('/auth/shibboleth_link/manage_linked_users.php');
+
+            default:
+                throw new Exception('Unrecognised auth_shibboleth_link page type "' . $type . '."');
+        }
+    }
 }
