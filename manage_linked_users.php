@@ -41,11 +41,7 @@ $linkedusers = $DB->get_records('auth_shibboleth_link', ['userid' => $USER->id],
 if ($action == 'unlink') {
     require_sesskey();
     $linkid = required_param('link_id', PARAM_INT);
-    if (empty($linkedusers[$linkid])) {
-        throw new \moodle_exception('not allowed');
-    }
-
-    $DB->delete_records('auth_shibboleth_link', ['id' => $linkid]);
+    \auth_shibboleth_link\lib::link_unlink($linkid, $USER->id);
 
     redirect($PAGE->url);
 }

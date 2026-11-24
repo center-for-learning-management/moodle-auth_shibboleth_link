@@ -51,11 +51,8 @@ if ($action == 'logout' && !empty($redirect)) {
         require_logout();
     }
 
-    // Validate the return URL to prevent open redirects (same check as login.php).
-    $redirecturl = new moodle_url($redirect);
-    if (!$redirecturl->is_local_url()) {
-        throw new moodle_exception('invalid_wantsurl');
-    }
+    // Validate the return URL to prevent open redirects (#18).
+    $redirecturl = \auth_shibboleth_link\lib::validate_logout_redirect($redirect);
 
     // Finally, send user to the return URL.
     redirect($redirecturl);

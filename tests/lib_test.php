@@ -181,4 +181,82 @@ final class lib_test extends \advanced_testcase {
             $_SERVER = $origserver;
         }
     }
+
+    /**
+     * Data provider of malicious or external redirect URLs that must be rejected (#18).
+     *
+     * @return array[]
+     */
+    public static function invalid_logout_redirect_provider(): array {
+        return [
+            'empty string' => [''],
+            'external https domain' => ['https://evil.example.org/phish'],
+            'external http domain' => ['http://evil.example.org/phish'],
+            'protocol-relative URL' => ['//evil.example.org/phish'],
+            'triple-slash protocol-relative' => ['///evil.example.org/phish'],
+            'javascript scheme' => ['javascript:alert(1)'],
+            'newline header injection' => ["https://example.com/\r\nSet-Cookie: evil=1"],
+        ];
+    }
+
+    /**
+     * Test that validate_logout_redirect() rejects external/malicious URLs (#18).
+     *
+     * @dataProvider invalid_logout_redirect_provider
+     * @param string $badurl
+     */
+    public function test_validate_logout_redirect_rejects_external_urls(string $badurl): void {
+        $this->resetAfterTest();
+        $this->expectException(\moodle_exception::class);
+        lib::validate_logout_redirect($badurl);
+    }
+
+    /**
+     * Test that validate_logout_redirect() accepts valid local URLs (#18).
+     */
+    public function test_validate_logout_redirect_accepts_local_urls(): void {
+        global $CFG;
+        $this->resetAfterTest();
+
+        $relative = lib::validate_logout_redirect('/login/index.php');
+        $this->assertEquals($CFG->wwwroot . '/login/index.php', $relative->out(false));
+
+        $absolute = lib::validate_logout_redirect($CFG->wwwroot . '/my/');
+        $this->assertEquals($CFG->wwwroot . '/my/', $absolute->out(false));
+    }
+
+    /**
+     * Test that link_unlink() deletes only the owner's link and blocks IDOR attempts (#17).
+     */
+    public function test_link_unlink_ownership_and_deletion(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        $owner = $this->getDataGenerator()->create_user();
+        $attacker = $this->getDataGenerator()->create_user();
+
+        lib::idpparams_store([
+            'idp' => 'https://bildung.gv.at/idp/shibboleth',
+            'idpusername' => 'owner.user@bildung.gv.at',
+            'userinfo' => [
+                'firstname' => 'Owner',
+                'lastname' => 'User',
+                'email' => 'owner@example.at',
+            ],
+        ]);
+        $linkid = lib::link_store($owner);
+
+        // Attacker cannot unlink owner's record.
+        try {
+            lib::link_unlink($linkid, $attacker->id);
+            $this->fail('Expected moodle_exception when unlinking another user\'s link.');
+        } catch (\moodle_exception $e) {
+            $this->assertEquals('not allowed', $e->errorcode);
+        }
+        $this->assertTrue($DB->record_exists('auth_shibboleth_link', ['id' => $linkid]));
+
+        // Owner can unlink their own record.
+        lib::link_unlink($linkid, $owner->id);
+        $this->assertFalse($DB->record_exists('auth_shibboleth_link', ['id' => $linkid]));
+    }
 }

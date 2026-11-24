@@ -83,6 +83,26 @@ class behat_auth_shibboleth_link extends behat_base {
     }
 
     /**
+     * Visits a relative URL and asserts that Moodle renders an exception containing the expected text.
+     *
+     * @Then /^visiting "([^"]*)" should display the error "([^"]*)"$/
+     * @param string $path Relative path including query parameters.
+     * @param string $expectedtext Text expected in the rendered Moodle exception.
+     */
+    public function visiting_should_display_the_error(string $path, string $expectedtext): void {
+        $this->getSession()->visit($this->locate_path($path));
+        $text = $this->getSession()->getPage()->getText();
+        if (strpos($text, $expectedtext) === false) {
+            throw new \Behat\Mink\Exception\ExpectationException(
+                sprintf('Expected error text "%s" was not found when visiting "%s".', $expectedtext, $path),
+                $this->getSession()
+            );
+        }
+        // Navigate away from the fatalerror DOM node before Behat after_step exception check runs.
+        $this->getSession()->visit($this->locate_path('/'));
+    }
+
+    /**
      * Convert page names to URLs for steps like 'When I am on the "[identifier]" "[page type]" page'.
      *
      * @param string $type identifies which type of page this is, e.g. 'Manage'.

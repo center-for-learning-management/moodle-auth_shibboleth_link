@@ -265,4 +265,42 @@ class lib {
             return $DB->insert_record('auth_shibboleth_link', $link);
         }
     }
+
+    /**
+     * Validates a front-channel logout return URL to prevent open redirects (#18).
+     *
+     * @param string $returnurl The raw return URL parameter.
+     * @return \moodle_url Validated local Moodle URL.
+     * @throws \moodle_exception If the URL is empty or points outside $CFG->wwwroot.
+     */
+    public static function validate_logout_redirect(string $returnurl): \moodle_url {
+        if ($returnurl === '' || preg_match('/[\r\n]/', $returnurl)) {
+            throw new \moodle_exception('invalid_wantsurl');
+        }
+        $redirecturl = new \moodle_url($returnurl);
+        if (!$redirecturl->is_local_url()) {
+            throw new \moodle_exception('invalid_wantsurl');
+        }
+        return $redirecturl;
+    }
+
+    /**
+     * Unlinks a Shibboleth identity owned by the specified user after verifying ownership (#17).
+     *
+     * @param int $linkid The ID in {auth_shibboleth_link}.
+     * @param int $userid The owner user ID (defaults to $USER->id).
+     * @return void
+     * @throws \moodle_exception If the link does not exist or belongs to another user.
+     */
+    public static function link_unlink(int $linkid, int $userid = 0): void {
+        global $DB, $USER;
+        if (empty($userid)) {
+            $userid = $USER->id;
+        }
+        $link = $DB->get_record('auth_shibboleth_link', ['id' => $linkid, 'userid' => $userid]);
+        if (empty($link)) {
+            throw new \moodle_exception('not allowed');
+        }
+        $DB->delete_records('auth_shibboleth_link', ['id' => $linkid]);
+    }
 }

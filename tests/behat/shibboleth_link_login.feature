@@ -53,6 +53,19 @@ Feature: Shibboleth link account creation, linking, and error handling
     And I am on the "Manage linked users" "auth_shibboleth_link > Manage" page
     Then I should see "bildung.gv.at"
     And I should see "erika.idp@bildung.gv.at"
+    # Verify forged unlink without a valid sesskey is blocked (#17).
+    And visiting "/auth/shibboleth_link/manage_linked_users.php?action=unlink&link_id=1&sesskey=invalidsesskey" should display the error "Invalid session key"
+    When I am on the "Manage linked users" "auth_shibboleth_link > Manage" page
+    Then I should see "erika.idp@bildung.gv.at"
+    # Unlink legitimately via the POST form with valid sesskey.
+    When I click on "Unlink" "button" in the "erika.idp@bildung.gv.at" "table_row"
+    And I accept the confirmation dialog
+    Then I should not see "erika.idp@bildung.gv.at"
+
+  @javascript
+  Scenario: Front-channel logout rejects external return URLs to prevent open redirects
+    Given I log in as "existing"
+    Then visiting "/auth/shibboleth_link/logout.php?action=logout&return=https://evil.example.org/phish" should display the error "invalid_wantsurl"
 
   @javascript
   Scenario: Missing Shibboleth user attribute renders Moodle exception instead of fatal error

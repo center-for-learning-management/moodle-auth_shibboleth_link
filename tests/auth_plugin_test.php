@@ -76,4 +76,30 @@ final class auth_plugin_test extends \advanced_testcase {
         $this->assertCount(1, $items);
         $this->assertEquals('auth_shibboleth_link', $items[0]->get_name());
     }
+
+    /**
+     * Guard against regressions in security-sensitive entrypoints (#17, #20).
+     */
+    public function test_security_invariants_in_entrypoints(): void {
+        global $CFG;
+        $plugindir = $CFG->dirroot . '/auth/shibboleth_link';
+
+        // #20: Ensure no raw header('Location') calls exist; Moodle's redirect() must be used.
+        $phpfiles = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($plugindir));
+        foreach ($phpfiles as $file) {
+            if ($file->getExtension() !== 'php' || strpos($file->getPathname(), '/tests/') !== false) {
+                continue;
+            }
+            $code = file_get_contents($file->getPathname());
+            $this->assertDoesNotMatchRegularExpression(
+                '/header\s*\(\s*[\'"]Location\s*:/i',
+                $code,
+                'Raw header("Location:") found in ' . $file->getFilename() . '; use redirect() instead (#20).'
+            );
+        }
+
+        // #17: Ensure manage_linked_users.php enforces require_sesskey() on unlink.
+        $managecode = file_get_contents($plugindir . '/manage_linked_users.php');
+        $this->assertStringContainsString('require_sesskey();', $managecode);
+    }
 }
