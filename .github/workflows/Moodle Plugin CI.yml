@@ -35,7 +35,7 @@ permissions:
 
 jobs:
   # --------------------------------------------------------------------------
-  # TEST JOB â€“ runs all checks
+  # TEST JOB – runs all checks
   # --------------------------------------------------------------------------
   test:
     runs-on: ubuntu-24.04
@@ -278,7 +278,7 @@ jobs:
         run: exit 1
 
   # --------------------------------------------------------------------------
-  # FIX-AND-PR JOB â€“ runs once after all test legs finish
+  # FIX-AND-PR JOB – runs once after all test legs finish
   # --------------------------------------------------------------------------
   fix-and-pr:
     needs: test
@@ -451,11 +451,12 @@ jobs:
       # (e.g., obsolete build files) are also deleted from the checkout.
       # ----------------------------------------------------------------------
 
-      # ---- PHP Code Beautifier and Fixer (phpcbf) ----
+# ---- PHP Code Beautifier and Fixer (phpcbf) ----
       - name: Moodle Code Beautifier and Fixer
         if: ${{ !cancelled() }}
         timeout-minutes: 15
         run: |
+          : "${PLUGIN_INSTALL_DIR:?PLUGIN_INSTALL_DIR is not set - did the resolve step fail?}"
           standardfile="$(pwd)/plugin/.github/moodle-ci/phpcs-exclusions.xml"
           if [ -f "$standardfile" ]; then
             echo "Using custom phpcs standard: $standardfile"
@@ -465,9 +466,11 @@ jobs:
             moodle-plugin-ci phpcbf
           fi
 
-          # Guard against an unset/empty PLUGIN_INSTALL_DIR.
-          : "${PLUGIN_INSTALL_DIR:?PLUGIN_INSTALL_DIR is not set - did the resolve step fail?}"
-          rsync -av --delete "${{ github.workspace }}/moodle/public/${PLUGIN_INSTALL_DIR}/." "${{ github.workspace }}/plugin/." --exclude='.git'
+          rsync -av --delete \
+            --exclude='.git' \
+            --exclude='phpunit.xml' \
+            "${{ github.workspace }}/moodle/public/${PLUGIN_INSTALL_DIR}/." \
+            "${{ github.workspace }}/plugin/."
 
           cd plugin
           git add -A
@@ -483,9 +486,15 @@ jobs:
         timeout-minutes: 15
         run: |
           : "${PLUGIN_INSTALL_DIR:?PLUGIN_INSTALL_DIR is not set - did the resolve step fail?}"
-          cd ${{ github.workspace }}/moodle
+          plugindir="${{ github.workspace }}/moodle/public/${PLUGIN_INSTALL_DIR}"
+
+          if [ -z "$(find "$plugindir" -type f \( -name '*.js' -o -name '*.mjs' -o -name '*.cjs' \) ! -path '*/amd/build/*' ! -path '*/yui/build/*' ! -path '*/node_modules/*' ! -path '*/vendor/*')" ]; then
+            echo "No JS source files found in plugin, skipping ESLint."
+            exit 0
+          fi
+
+          cd "${{ github.workspace }}/moodle"
           set +e
-          # Only lint the plugin - linting all of Moodle's public/ takes very long.
           ./node_modules/.bin/eslint --fix "public/${PLUGIN_INSTALL_DIR}/"
           eslint_exit=$?
           set -e
@@ -496,10 +505,13 @@ jobs:
           fi
           echo "ESLint --fix modified files; ignoring its exit code ($eslint_exit)."
 
-          : "${PLUGIN_INSTALL_DIR:?PLUGIN_INSTALL_DIR is not set - did the resolve step fail?}"
-          rsync -av --delete "${{ github.workspace }}/moodle/public/${PLUGIN_INSTALL_DIR}/." "${{ github.workspace }}/plugin/." --exclude='.git'
+          rsync -av --delete \
+            --exclude='.git' \
+            --exclude='phpunit.xml' \
+            "${plugindir}/." \
+            "${{ github.workspace }}/plugin/."
 
-          cd ${{ github.workspace }}/plugin
+          cd "${{ github.workspace }}/plugin"
           git add -A
           if git diff --cached --quiet; then
             echo "No plugin-relevant ESLint changes, skipping commit."
@@ -513,10 +525,16 @@ jobs:
         timeout-minutes: 15
         run: |
           : "${PLUGIN_INSTALL_DIR:?PLUGIN_INSTALL_DIR is not set - did the resolve step fail?}"
-          cd ${{ github.workspace }}/moodle
+          plugindir="${{ github.workspace }}/moodle/public/${PLUGIN_INSTALL_DIR}"
+
+          if [ -z "$(find "$plugindir" -type f \( -name '*.scss' -o -name '*.css' \) ! -path '*/node_modules/*' ! -path '*/vendor/*')" ]; then
+            echo "No CSS/SCSS files found in plugin, skipping Stylelint."
+            exit 0
+          fi
+
+          cd "${{ github.workspace }}/moodle"
           set +e
-          # Only lint the plugin - linting all of Moodle's public/ takes very long.
-          ./node_modules/.bin/stylelint --fix "public/${PLUGIN_INSTALL_DIR}/**/*.scss"
+          ./node_modules/.bin/stylelint --fix "public/${PLUGIN_INSTALL_DIR}/**/*.{scss,css}"
           stylelint_exit=$?
           set -e
 
@@ -526,10 +544,13 @@ jobs:
           fi
           echo "Stylelint --fix modified files; ignoring its exit code ($stylelint_exit)."
 
-          : "${PLUGIN_INSTALL_DIR:?PLUGIN_INSTALL_DIR is not set - did the resolve step fail?}"
-          rsync -av --delete "${{ github.workspace }}/moodle/public/${PLUGIN_INSTALL_DIR}/." "${{ github.workspace }}/plugin/." --exclude='.git'
+          rsync -av --delete \
+            --exclude='.git' \
+            --exclude='phpunit.xml' \
+            "${plugindir}/." \
+            "${{ github.workspace }}/plugin/."
 
-          cd ${{ github.workspace }}/plugin
+          cd "${{ github.workspace }}/plugin"
           git add -A
           if git diff --cached --quiet; then
             echo "No plugin-relevant Stylelint changes, skipping commit."
@@ -538,38 +559,28 @@ jobs:
           fi
 
       # ---- Rebuild AMD assets using targeted Grunt command ----
-      # This step runs only if the plugin has an 'amd' directory.
-      # It builds the AMD modules specifically for this plugin using
-      # `npx grunt amd --component=<component>`. This forces a rebuild
-      # of the .min.js and .map files and correctly handles files that
-      # are no longer generated (they are deleted).
       - name: Rebuild AMD assets with Grunt
         if: ${{ !cancelled() }}
         timeout-minutes: 15
         run: |
-          # Check if the plugin has an amd directory.
+          : "${PLUGIN_INSTALL_DIR:?PLUGIN_INSTALL_DIR is not set - did the resolve step fail?}"
           if [ ! -d "${{ github.workspace }}/moodle/public/${PLUGIN_INSTALL_DIR}/amd" ]; then
             echo "No amd directory found, skipping AMD rebuild."
             exit 0
           fi
 
-          cd ${{ github.workspace }}/moodle
+          cd "${{ github.workspace }}/moodle"
           set +e
-          # Run the amd task for this specific component.
-          output=$(npx grunt amd --component=${{ env.PLUGIN_COMPONENT }} 2>&1)
+          output=$(npx grunt amd --component="${{ env.PLUGIN_COMPONENT }}" 2>&1)
           grunt_exit=$?
           set -e
 
-          # Grunt exits 1 when files are stale (after rebuilding them).
-          # If it exits with anything else (e.g., 2 for real error), fail the step.
           if [ $grunt_exit -ne 0 ] && [ $grunt_exit -ne 1 ]; then
             echo "Grunt failed with unexpected exit code $grunt_exit"
             echo "$output"
             exit $grunt_exit
           fi
 
-          # Delete files that are no longer generated.
-          # Look for lines like: "File no longer generated and likely should be deleted: amd/build/functions.min.js"
           echo "$output" | grep -oP "File no longer generated and likely should be deleted: \K[^\s]+" | while read -r file; do
             fullpath="${{ github.workspace }}/moodle/public/${PLUGIN_INSTALL_DIR}/$file"
             if [ -f "$fullpath" ]; then
@@ -580,16 +591,17 @@ jobs:
             fi
           done
 
-          # Check if any files were changed in the plugin's installed directory.
           if [ -z "$(git status --porcelain "public/${PLUGIN_INSTALL_DIR}/")" ]; then
             echo "Grunt made no changes to the plugin."
           else
             echo "Grunt modified plugin files."
-            : "${PLUGIN_INSTALL_DIR:?PLUGIN_INSTALL_DIR is not set - did the resolve step fail?}"
-            # Use --delete to remove files that are no longer generated (should now be removed from source).
-            rsync -av --delete "${{ github.workspace }}/moodle/public/${PLUGIN_INSTALL_DIR}/." "${{ github.workspace }}/plugin/." --exclude='.git'
+            rsync -av --delete \
+              --exclude='.git' \
+              --exclude='phpunit.xml' \
+              "${{ github.workspace }}/moodle/public/${PLUGIN_INSTALL_DIR}/." \
+              "${{ github.workspace }}/plugin/."
 
-            cd ${{ github.workspace }}/plugin
+            cd "${{ github.workspace }}/plugin"
             git add -A
             if git diff --cached --quiet; then
               echo "No plugin-relevant changes after rsync, skipping commit."
