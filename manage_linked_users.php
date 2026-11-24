@@ -15,6 +15,8 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * Page allowing users to view and unlink their connected Shibboleth accounts.
+ *
  * @package    auth_shibboleth_link
  * @copyright  2019 Zentrum für Lernmanagement (http://www.lernmanagement.at)
  * @author     Robert Schrenk
@@ -34,32 +36,32 @@ $PAGE->set_url('/auth/shibboleth_link/manage_linked_users.php');
 
 require_login();
 
-$linked_users = $DB->get_records('auth_shibboleth_link', ['userid' => $USER->id], 'lastseen DESC');
+$linkedusers = $DB->get_records('auth_shibboleth_link', ['userid' => $USER->id], 'lastseen DESC');
 
 if ($action == 'unlink') {
     require_sesskey();
-    $link_id = required_param('link_id', PARAM_INT);
-    if (empty($linked_users[$link_id])) {
+    $linkid = required_param('link_id', PARAM_INT);
+    if (empty($linkedusers[$linkid])) {
         throw new \moodle_exception('not allowed');
     }
 
-    $DB->delete_records('auth_shibboleth_link', ['id' => $link_id]);
+    $DB->delete_records('auth_shibboleth_link', ['id' => $linkid]);
 
     redirect($PAGE->url);
 }
 
 echo $OUTPUT->header();
 
-if (!$linked_users) {
+if (!$linkedusers) {
     echo get_string('manage_linked_users:no_linked_users', 'auth_shibboleth_link');
 } else {
     echo $OUTPUT->render_from_template('auth_shibboleth_link/manage_linked_users', [
-        'linked_users' => array_values(array_map(function($linked_user) {
-            $linked_user->idp = preg_replace('!/.*!', '', preg_replace('!^https?://!', '', $linked_user->idp));
-            $linked_user->created = userdate($linked_user->created);
-            $linked_user->lastseen = userdate($linked_user->lastseen);
-            return $linked_user;
-        }, $linked_users)),
+        'linked_users' => array_values(array_map(function($linkeduser) {
+            $linkeduser->idp = preg_replace('!/.*!', '', preg_replace('!^https?://!', '', $linkeduser->idp));
+            $linkeduser->created = userdate($linkeduser->created);
+            $linkeduser->lastseen = userdate($linkeduser->lastseen);
+            return $linkeduser;
+        }, $linkedusers)),
         'sesskey' => sesskey(),
         'actionurl' => $PAGE->url->out(false),
     ]);

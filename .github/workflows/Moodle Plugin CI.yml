@@ -39,6 +39,7 @@ jobs:
   # --------------------------------------------------------------------------
   test:
     runs-on: ubuntu-24.04
+    timeout-minutes: 45
 
     # Database services (only one is actually used per matrix entry).
     services:
@@ -87,13 +88,30 @@ jobs:
       # Install moodle-plugin-ci tool and its dependencies.
       - name: Initialise moodle-plugin-ci
         env:
-          COMPOSER_AUTH: '{"github-oauth": {"github.com": "${{secrets.github_token}}"} }'
+          COMPOSER_AUTH: '{"github-oauth": {"github.com": "${{secrets.GITHUB_TOKEN}}"} }'
         run: |
           composer create-project -n --no-dev --prefer-dist moodlehq/moodle-plugin-ci ci ^4
           echo "$(cd ci/bin; pwd)" >> "$GITHUB_PATH"
           echo "$(cd ci/vendor/bin; pwd)" >> "$GITHUB_PATH"
           sudo locale-gen en_AU.UTF-8
           echo "NVM_DIR=$HOME/.nvm" >> "$GITHUB_ENV"
+
+      # Allow cloning private dependency repos (git@github.com:... or https://github.com/...) with a token.
+      # The default GITHUB_TOKEN only has access to this repository, so a PAT with read access
+      # to the dependency repos is needed (repository secret BOT_GITHUB_ACTION_PAT).
+      - name: Configure git access for plugin dependencies
+        env:
+          DEPS_TOKEN: ${{ secrets.BOT_GITHUB_ACTION_PAT }}
+        run: |
+          if [ -z "$DEPS_TOKEN" ]; then
+            echo "::warning::Secret BOT_GITHUB_ACTION_PAT is not set - cloning private dependencies will fail."
+            exit 0
+          fi
+          # Remove any whitespace/newlines accidentally stored in the secret (git rejects them in config keys).
+          DEPS_TOKEN="$(printf '%s' "$DEPS_TOKEN" | tr -d '[:space:]')"
+          echo "::add-mask::$DEPS_TOKEN"
+          # Only SSH-style URLs (git@github.com:...) from .github/moodle-ci/dependencies are rewritten.
+          git config --global url."https://x-access-token:${DEPS_TOKEN}@github.com/".insteadOf "git@github.com:"
 
       # Add extra plugin dependencies if specified (either via file or override).
       - name: Add plugin dependencies
@@ -176,10 +194,12 @@ jobs:
 
       - name: PHP Copy/Paste Detector
         if: ${{ !cancelled() }}
+        timeout-minutes: 15
         run: moodle-plugin-ci phpcpd
 
       - name: PHP Mess Detector
         if: ${{ !cancelled() }}
+        timeout-minutes: 15
         run: |
           rulesfile="$(pwd)/plugin/.github/moodle-ci/phpmd-exclusions.xml"
           if [ -f "$rulesfile" ]; then
@@ -192,6 +212,7 @@ jobs:
 
       - name: Moodle Code Checker
         if: ${{ !cancelled() }}
+        timeout-minutes: 15
         run: |
           standardfile="$(pwd)/plugin/.github/moodle-ci/phpcs-exclusions.xml"
           if [ -f "$standardfile" ]; then
@@ -204,6 +225,7 @@ jobs:
 
       - name: Moodle PHPDoc Checker
         if: ${{ !cancelled() }}
+        timeout-minutes: 15
         run: moodle-plugin-ci phpdoc --max-warnings 0
 
       - name: Validating
@@ -216,14 +238,25 @@ jobs:
 
       - name: Mustache Lint
         if: ${{ !cancelled() }}
+        timeout-minutes: 15
         run: moodle-plugin-ci mustache
 
       - name: Grunt
         if: ${{ !cancelled() }}
+        timeout-minutes: 15
         run: moodle-plugin-ci grunt --max-lint-warnings 0
+
+      # If Moodle reports the PHPUnit environment as stale ("initialised for different version"),
+      # the reason is printed and the environment is initialised again instead of failing the tests.
+      - name: Ensure PHPUnit environment is current
+        if: ${{ !cancelled() }}
+        timeout-minutes: 10
+        working-directory: moodle
+        run: php public/admin/tool/phpunit/cli/util.php --diag || php public/admin/tool/phpunit/cli/init.php
 
       - name: PHPUnit tests
         if: ${{ !cancelled() }}
+        timeout-minutes: 15
         run: moodle-plugin-ci phpunit --fail-on-warning
 
       - name: Behat features
@@ -251,6 +284,7 @@ jobs:
     needs: test
     if: ${{ always() }}   # run even if tests failed, so we can fix issues
     runs-on: ubuntu-24.04
+    timeout-minutes: 45
 
     services:
       # We only need MariaDB for the fixer job (same as the test leg).
@@ -291,13 +325,30 @@ jobs:
       # Initialise moodle-plugin-ci (same as test job).
       - name: Initialise moodle-plugin-ci
         env:
-          COMPOSER_AUTH: '{"github-oauth": {"github.com": "${{secrets.github_token}}"} }'
+          COMPOSER_AUTH: '{"github-oauth": {"github.com": "${{secrets.GITHUB_TOKEN}}"} }'
         run: |
           composer create-project -n --no-dev --prefer-dist moodlehq/moodle-plugin-ci ci ^4
           echo "$(cd ci/bin; pwd)" >> "$GITHUB_PATH"
           echo "$(cd ci/vendor/bin; pwd)" >> "$GITHUB_PATH"
           sudo locale-gen en_AU.UTF-8
           echo "NVM_DIR=$HOME/.nvm" >> "$GITHUB_ENV"
+
+      # Allow cloning private dependency repos (git@github.com:... or https://github.com/...) with a token.
+      # The default GITHUB_TOKEN only has access to this repository, so a PAT with read access
+      # to the dependency repos is needed (repository secret BOT_GITHUB_ACTION_PAT).
+      - name: Configure git access for plugin dependencies
+        env:
+          DEPS_TOKEN: ${{ secrets.BOT_GITHUB_ACTION_PAT }}
+        run: |
+          if [ -z "$DEPS_TOKEN" ]; then
+            echo "::warning::Secret BOT_GITHUB_ACTION_PAT is not set - cloning private dependencies will fail."
+            exit 0
+          fi
+          # Remove any whitespace/newlines accidentally stored in the secret (git rejects them in config keys).
+          DEPS_TOKEN="$(printf '%s' "$DEPS_TOKEN" | tr -d '[:space:]')"
+          echo "::add-mask::$DEPS_TOKEN"
+          # Only SSH-style URLs (git@github.com:...) from .github/moodle-ci/dependencies are rewritten.
+          git config --global url."https://x-access-token:${DEPS_TOKEN}@github.com/".insteadOf "git@github.com:"
 
       # Add plugin dependencies (same as test).
       - name: Add plugin dependencies
@@ -400,10 +451,12 @@ jobs:
       # (e.g., obsolete build files) are also deleted from the checkout.
       # ----------------------------------------------------------------------
 
-      # ---- PHP Code Beautifier and Fixer (phpcbf) ----
+# ---- PHP Code Beautifier and Fixer (phpcbf) ----
       - name: Moodle Code Beautifier and Fixer
         if: ${{ !cancelled() }}
+        timeout-minutes: 15
         run: |
+          : "${PLUGIN_INSTALL_DIR:?PLUGIN_INSTALL_DIR is not set - did the resolve step fail?}"
           standardfile="$(pwd)/plugin/.github/moodle-ci/phpcs-exclusions.xml"
           if [ -f "$standardfile" ]; then
             echo "Using custom phpcs standard: $standardfile"
@@ -413,9 +466,11 @@ jobs:
             moodle-plugin-ci phpcbf
           fi
 
-          # Guard against an unset/empty PLUGIN_INSTALL_DIR.
-          : "${PLUGIN_INSTALL_DIR:?PLUGIN_INSTALL_DIR is not set - did the resolve step fail?}"
-          rsync -av --delete "${{ github.workspace }}/moodle/public/${PLUGIN_INSTALL_DIR}/." "${{ github.workspace }}/plugin/." --exclude='.git'
+          rsync -av --delete \
+            --exclude='.git' \
+            --exclude='phpunit.xml' \
+            "${{ github.workspace }}/moodle/public/${PLUGIN_INSTALL_DIR}/." \
+            "${{ github.workspace }}/plugin/."
 
           cd plugin
           git add -A
@@ -428,23 +483,35 @@ jobs:
       # ---- ESLint --fix ----
       - name: ESLint --fix
         if: ${{ !cancelled() }}
+        timeout-minutes: 15
         run: |
-          cd ${{ github.workspace }}/moodle
+          : "${PLUGIN_INSTALL_DIR:?PLUGIN_INSTALL_DIR is not set - did the resolve step fail?}"
+          plugindir="${{ github.workspace }}/moodle/public/${PLUGIN_INSTALL_DIR}"
+
+          if [ -z "$(find "$plugindir" -type f \( -name '*.js' -o -name '*.mjs' -o -name '*.cjs' \) ! -path '*/amd/build/*' ! -path '*/yui/build/*' ! -path '*/node_modules/*' ! -path '*/vendor/*')" ]; then
+            echo "No JS source files found in plugin, skipping ESLint."
+            exit 0
+          fi
+
+          cd "${{ github.workspace }}/moodle"
           set +e
-          ./node_modules/.bin/eslint --fix public/
+          ./node_modules/.bin/eslint --fix "public/${PLUGIN_INSTALL_DIR}/"
           eslint_exit=$?
           set -e
 
-          if [ -z "$(git status --porcelain public/)" ]; then
+          if [ -z "$(git status --porcelain "public/${PLUGIN_INSTALL_DIR}/")" ]; then
             echo "ESLint --fix made no changes; propagating its exit code ($eslint_exit)."
             exit $eslint_exit
           fi
           echo "ESLint --fix modified files; ignoring its exit code ($eslint_exit)."
 
-          : "${PLUGIN_INSTALL_DIR:?PLUGIN_INSTALL_DIR is not set - did the resolve step fail?}"
-          rsync -av --delete "${{ github.workspace }}/moodle/public/${PLUGIN_INSTALL_DIR}/." "${{ github.workspace }}/plugin/." --exclude='.git'
+          rsync -av --delete \
+            --exclude='.git' \
+            --exclude='phpunit.xml' \
+            "${plugindir}/." \
+            "${{ github.workspace }}/plugin/."
 
-          cd ${{ github.workspace }}/plugin
+          cd "${{ github.workspace }}/plugin"
           git add -A
           if git diff --cached --quiet; then
             echo "No plugin-relevant ESLint changes, skipping commit."
@@ -455,23 +522,35 @@ jobs:
       # ---- Stylelint --fix ----
       - name: Stylelint --fix
         if: ${{ !cancelled() }}
+        timeout-minutes: 15
         run: |
-          cd ${{ github.workspace }}/moodle
+          : "${PLUGIN_INSTALL_DIR:?PLUGIN_INSTALL_DIR is not set - did the resolve step fail?}"
+          plugindir="${{ github.workspace }}/moodle/public/${PLUGIN_INSTALL_DIR}"
+
+          if [ -z "$(find "$plugindir" -type f \( -name '*.scss' -o -name '*.css' \) ! -path '*/node_modules/*' ! -path '*/vendor/*')" ]; then
+            echo "No CSS/SCSS files found in plugin, skipping Stylelint."
+            exit 0
+          fi
+
+          cd "${{ github.workspace }}/moodle"
           set +e
-          ./node_modules/.bin/stylelint --fix "public/**/*.scss"
+          ./node_modules/.bin/stylelint --fix "public/${PLUGIN_INSTALL_DIR}/**/*.{scss,css}"
           stylelint_exit=$?
           set -e
 
-          if [ -z "$(git status --porcelain public/)" ]; then
+          if [ -z "$(git status --porcelain "public/${PLUGIN_INSTALL_DIR}/")" ]; then
             echo "Stylelint --fix made no changes; propagating its exit code ($stylelint_exit)."
             exit $stylelint_exit
           fi
           echo "Stylelint --fix modified files; ignoring its exit code ($stylelint_exit)."
 
-          : "${PLUGIN_INSTALL_DIR:?PLUGIN_INSTALL_DIR is not set - did the resolve step fail?}"
-          rsync -av --delete "${{ github.workspace }}/moodle/public/${PLUGIN_INSTALL_DIR}/." "${{ github.workspace }}/plugin/." --exclude='.git'
+          rsync -av --delete \
+            --exclude='.git' \
+            --exclude='phpunit.xml' \
+            "${plugindir}/." \
+            "${{ github.workspace }}/plugin/."
 
-          cd ${{ github.workspace }}/plugin
+          cd "${{ github.workspace }}/plugin"
           git add -A
           if git diff --cached --quiet; then
             echo "No plugin-relevant Stylelint changes, skipping commit."
@@ -480,37 +559,28 @@ jobs:
           fi
 
       # ---- Rebuild AMD assets using targeted Grunt command ----
-      # This step runs only if the plugin has an 'amd' directory.
-      # It builds the AMD modules specifically for this plugin using
-      # `npx grunt amd --component=<component>`. This forces a rebuild
-      # of the .min.js and .map files and correctly handles files that
-      # are no longer generated (they are deleted).
       - name: Rebuild AMD assets with Grunt
         if: ${{ !cancelled() }}
+        timeout-minutes: 15
         run: |
-          # Check if the plugin has an amd directory.
+          : "${PLUGIN_INSTALL_DIR:?PLUGIN_INSTALL_DIR is not set - did the resolve step fail?}"
           if [ ! -d "${{ github.workspace }}/moodle/public/${PLUGIN_INSTALL_DIR}/amd" ]; then
             echo "No amd directory found, skipping AMD rebuild."
             exit 0
           fi
 
-          cd ${{ github.workspace }}/moodle
+          cd "${{ github.workspace }}/moodle"
           set +e
-          # Run the amd task for this specific component.
-          output=$(npx grunt amd --component=${{ env.PLUGIN_COMPONENT }} 2>&1)
+          output=$(npx grunt amd --component="${{ env.PLUGIN_COMPONENT }}" 2>&1)
           grunt_exit=$?
           set -e
 
-          # Grunt exits 1 when files are stale (after rebuilding them).
-          # If it exits with anything else (e.g., 2 for real error), fail the step.
           if [ $grunt_exit -ne 0 ] && [ $grunt_exit -ne 1 ]; then
             echo "Grunt failed with unexpected exit code $grunt_exit"
             echo "$output"
             exit $grunt_exit
           fi
 
-          # Delete files that are no longer generated.
-          # Look for lines like: "File no longer generated and likely should be deleted: amd/build/functions.min.js"
           echo "$output" | grep -oP "File no longer generated and likely should be deleted: \K[^\s]+" | while read -r file; do
             fullpath="${{ github.workspace }}/moodle/public/${PLUGIN_INSTALL_DIR}/$file"
             if [ -f "$fullpath" ]; then
@@ -521,16 +591,17 @@ jobs:
             fi
           done
 
-          # Check if any files were changed in the plugin's installed directory.
           if [ -z "$(git status --porcelain "public/${PLUGIN_INSTALL_DIR}/")" ]; then
             echo "Grunt made no changes to the plugin."
           else
             echo "Grunt modified plugin files."
-            : "${PLUGIN_INSTALL_DIR:?PLUGIN_INSTALL_DIR is not set - did the resolve step fail?}"
-            # Use --delete to remove files that are no longer generated (should now be removed from source).
-            rsync -av --delete "${{ github.workspace }}/moodle/public/${PLUGIN_INSTALL_DIR}/." "${{ github.workspace }}/plugin/." --exclude='.git'
+            rsync -av --delete \
+              --exclude='.git' \
+              --exclude='phpunit.xml' \
+              "${{ github.workspace }}/moodle/public/${PLUGIN_INSTALL_DIR}/." \
+              "${{ github.workspace }}/plugin/."
 
-            cd ${{ github.workspace }}/plugin
+            cd "${{ github.workspace }}/plugin"
             git add -A
             if git diff --cached --quiet; then
               echo "No plugin-relevant changes after rsync, skipping commit."
