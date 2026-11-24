@@ -60,8 +60,18 @@ class lib {
         $idpparams = self::idpparams_get(); // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter, VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
         $hooks = explode(';', get_config('auth_shibboleth_link', 'hooks'));
         foreach ($hooks as $hook) {
-            if (!empty($hook) && file_exists($CFG->dirroot . '/' . $hook)) {
-                require_once($CFG->dirroot . '/' . $hook);
+            $hook = trim($hook);
+            if ($hook === '') {
+                continue;
+            }
+            // Only allow php files inside dirroot (no path traversal).
+            $path = realpath($CFG->dirroot . '/' . $hook);
+            $root = realpath($CFG->dirroot);
+            if (
+                $path !== false && $root !== false && strpos($path, $root . DIRECTORY_SEPARATOR) === 0
+                    && substr($path, -4) === '.php' && is_file($path)
+            ) {
+                require_once($path);
             }
         }
     }
@@ -78,7 +88,7 @@ class lib {
         if (\user_not_fully_set_up($USER, true)) {
             $urltogo = $CFG->wwwroot . '/user/edit.php?id=' . $USER->id . '&amp;course=' . SITEID;
             // We do not delete $SESSION->wantsurl yet, so we get there later.
-        } else if (isset($SESSION->wantsurl) && (strpos($SESSION->wantsurl, $CFG->wwwroot) === 0)) {
+        } else if (isset($SESSION->wantsurl) && (new \moodle_url($SESSION->wantsurl))->is_local_url()) {
             $urltogo = $SESSION->wantsurl; // Because it is an address in this site.
             unset($SESSION->wantsurl);
         } else {

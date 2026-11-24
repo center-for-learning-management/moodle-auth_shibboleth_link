@@ -33,11 +33,8 @@ require_once($CFG->dirroot . "/auth/shibboleth/auth.php");
 $action = optional_param('action', '', PARAM_ALPHA);
 $redirect = optional_param('return', '', PARAM_URL);
 
-// Find out whether host supports https.
-$protocol = 'http://';
-if (is_https()) {
-    $protocol = 'https://';
-}
+// Do not trust the Host header or PHP_SELF (client controlled): build our own URL from wwwroot.
+$selfurl = $CFG->wwwroot . '/auth/shibboleth_link/logout.php';
 
 // If the shibboleth plugin is not enabled, throw an exception.
 if (!is_enabled_auth('shibboleth')) {
@@ -54,12 +51,18 @@ if ($action == 'logout' && !empty($redirect)) {
         require_logout();
     }
 
+    // Validate the return URL to prevent open redirects (same check as login.php).
+    $redirecturl = new moodle_url($redirect);
+    if (!$redirecturl->is_local_url()) {
+        throw new moodle_exception('invalid_wantsurl');
+    }
+
     // Finally, send user to the return URL.
-    redirect($redirect);
+    redirect($redirecturl);
 } else if (!empty($inputstream)) {
     // Back channel logout.
     // Set SOAP header.
-    $server = new SoapServer($protocol . $_SERVER['HTTP_HOST'] . $_SERVER['PHP_SELF'] . '/LogoutNotification.wsdl');
+    $server = new SoapServer($selfurl . '/LogoutNotification.wsdl');
     $server->addFunction("LogoutNotification");
     $server->handle();
 } else {
@@ -130,7 +133,7 @@ For more information see:
 
     <service name="LogoutNotificationService">
           <port name="LogoutNotificationPort" binding="notify:LogoutNotificationBinding">
-            <soap:address location="{$protocol}{$_SERVER['HTTP_HOST']}{$_SERVER['PHP_SELF']}"/>
+            <soap:address location="{$selfurl}"/>
           </port>
     </service>
 </definitions>

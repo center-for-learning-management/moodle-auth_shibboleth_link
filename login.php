@@ -97,6 +97,7 @@ if (isset($idp)) {
         }
         // For Shibboleth 1.x Service Providers.
         header('Location: ' . $sso . '?providerId=' . urlencode($idp) . '&target=' . urlencode($targeturl->out()));
+        exit;
     } else {
         $isvalid = false;
     }
