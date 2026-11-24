@@ -103,6 +103,25 @@ class behat_auth_shibboleth_link extends behat_base {
     }
 
     /**
+     * Clicks the unlink submit button in the table row matching the given text and accepts the confirmation alert.
+     *
+     * @When /^I unlink the Shibboleth identity for "([^"]*)"$/
+     * @param string $rowtext Text identifying the table row (e.g. email or IdP).
+     */
+    public function i_unlink_the_shibboleth_identity_for(string $rowtext): void {
+        $row = $this->find('xpath', "//table[contains(@class,'generaltable')]//tr[contains(., '{$rowtext}')]");
+        $button = $row->find('css', 'form button[type="submit"]');
+        if (!$button) {
+            throw new \Behat\Mink\Exception\ExpectationException(
+                sprintf('Unlink submit button not found in row containing "%s".', $rowtext),
+                $this->getSession()
+            );
+        }
+        $button->click();
+        $this->getSession()->getDriver()->getWebDriverSession()->accept_alert();
+    }
+
+    /**
      * Convert page names to URLs for steps like 'When I am on the "[identifier]" "[page type]" page'.
      *
      * @param string $type identifies which type of page this is, e.g. 'Manage'.

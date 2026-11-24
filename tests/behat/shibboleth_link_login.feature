@@ -58,8 +58,7 @@ Feature: Shibboleth link account creation, linking, and error handling
     When I am on the "Manage linked users" "auth_shibboleth_link > Manage" page
     Then I should see "erika.idp@bildung.gv.at"
     # Unlink legitimately via the POST form with valid sesskey.
-    When I click on "Unlink" "button" in the "erika.idp@bildung.gv.at" "table_row"
-    And I confirm the dialogue
+    When I unlink the Shibboleth identity for "erika.idp@bildung.gv.at"
     Then I should not see "erika.idp@bildung.gv.at"
 
   @javascript
