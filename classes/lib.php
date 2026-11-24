@@ -274,7 +274,7 @@ class lib {
      * @throws \moodle_exception If the URL is empty or points outside $CFG->wwwroot.
      */
     public static function validate_logout_redirect(string $returnurl): \moodle_url {
-        if ($returnurl === '' || preg_match('/[\r\n]/', $returnurl)) {
+        if ($returnurl === '' || preg_match('/[\r\n]/', $returnurl) || preg_match('#^[/\\\\]{2,}#', $returnurl)) {
             throw new \moodle_exception('invalid_wantsurl');
         }
         $redirecturl = new \moodle_url($returnurl);

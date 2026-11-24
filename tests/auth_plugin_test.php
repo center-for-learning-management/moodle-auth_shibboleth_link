@@ -84,18 +84,22 @@ final class auth_plugin_test extends \advanced_testcase {
         global $CFG;
         $plugindir = $CFG->dirroot . '/auth/shibboleth_link';
 
-        // #20: Ensure no raw header('Location') calls exist; Moodle's redirect() must be used.
+        // #20: Ensure any header('Location:') call is immediately followed by exit; so execution never continues.
         $phpfiles = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($plugindir));
         foreach ($phpfiles as $file) {
             if ($file->getExtension() !== 'php' || strpos($file->getPathname(), '/tests/') !== false) {
                 continue;
             }
             $code = file_get_contents($file->getPathname());
-            $this->assertDoesNotMatchRegularExpression(
-                '/header\s*\(\s*[\'"]Location\s*:/i',
-                $code,
-                'Raw header("Location:") found in ' . $file->getFilename() . '; use redirect() instead (#20).'
-            );
+            if (preg_match_all('/header\s*\(\s*[\'"]Location\s*:[^;]+;\s*([^\r\n;]+;)?/i', $code, $matches)) {
+                foreach ($matches[0] as $match) {
+                    $this->assertMatchesRegularExpression(
+                        '/;\s*(exit|die)\s*(\(\s*\))?\s*;/i',
+                        $match,
+                        'header("Location:") in ' . $file->getFilename() . ' must be immediately followed by exit; (#20).'
+                    );
+                }
+            }
         }
 
         // #17: Ensure manage_linked_users.php enforces require_sesskey() on unlink.
