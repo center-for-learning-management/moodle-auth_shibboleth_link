@@ -60,8 +60,21 @@ class lib {
         $idpparams = self::idpparams_get(); // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter, VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
         $hooks = explode(';', get_config('auth_shibboleth_link', 'hooks'));
         foreach ($hooks as $hook) {
-            if (!empty($hook) && file_exists($CFG->dirroot . '/' . $hook)) {
-                require_once($CFG->dirroot . '/' . $hook);
+            $hook = trim($hook);
+            if ($hook === '') {
+                continue;
+            }
+            // Only allow php files inside dirroot (no path traversal).
+            $path = realpath($CFG->dirroot . '/' . $hook);
+            $root = realpath($CFG->dirroot);
+            if (
+                $path !== false &&
+                $root !== false &&
+                strpos($path, $root . DIRECTORY_SEPARATOR) === 0 &&
+                substr($path, -4) === '.php' &&
+                is_file($path)
+            ) {
+                require_once($path);
             }
         }
     }
@@ -78,7 +91,7 @@ class lib {
         if (\user_not_fully_set_up($USER, true)) {
             $urltogo = $CFG->wwwroot . '/user/edit.php?id=' . $USER->id . '&amp;course=' . SITEID;
             // We do not delete $SESSION->wantsurl yet, so we get there later.
-        } else if (isset($SESSION->wantsurl) && (strpos($SESSION->wantsurl, $CFG->wwwroot) === 0)) {
+        } else if (isset($SESSION->wantsurl) && (new \moodle_url($SESSION->wantsurl))->is_local_url()) {
             $urltogo = $SESSION->wantsurl; // Because it is an address in this site.
             unset($SESSION->wantsurl);
         } else {
@@ -251,5 +264,43 @@ class lib {
             ];
             return $DB->insert_record('auth_shibboleth_link', $link);
         }
+    }
+
+    /**
+     * Validates a front-channel logout return URL to prevent open redirects (#18).
+     *
+     * @param string $returnurl The raw return URL parameter.
+     * @return \moodle_url Validated local Moodle URL.
+     * @throws \moodle_exception If the URL is empty or points outside $CFG->wwwroot.
+     */
+    public static function validate_logout_redirect(string $returnurl): \moodle_url {
+        if ($returnurl === '' || preg_match('/[\r\n]/', $returnurl) || preg_match('#^[/\\\\]{2,}#', $returnurl)) {
+            throw new \moodle_exception('invalid_wantsurl');
+        }
+        $redirecturl = new \moodle_url($returnurl);
+        if (!$redirecturl->is_local_url()) {
+            throw new \moodle_exception('invalid_wantsurl');
+        }
+        return $redirecturl;
+    }
+
+    /**
+     * Unlinks a Shibboleth identity owned by the specified user after verifying ownership (#17).
+     *
+     * @param int $linkid The ID in {auth_shibboleth_link}.
+     * @param int $userid The owner user ID (defaults to $USER->id).
+     * @return void
+     * @throws \moodle_exception If the link does not exist or belongs to another user.
+     */
+    public static function link_unlink(int $linkid, int $userid = 0): void {
+        global $DB, $USER;
+        if (empty($userid)) {
+            $userid = $USER->id;
+        }
+        $link = $DB->get_record('auth_shibboleth_link', ['id' => $linkid, 'userid' => $userid]);
+        if (empty($link)) {
+            throw new \moodle_exception('not allowed');
+        }
+        $DB->delete_records('auth_shibboleth_link', ['id' => $linkid]);
     }
 }

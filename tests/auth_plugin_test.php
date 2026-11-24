@@ -76,4 +76,34 @@ final class auth_plugin_test extends \advanced_testcase {
         $this->assertCount(1, $items);
         $this->assertEquals('auth_shibboleth_link', $items[0]->get_name());
     }
+
+    /**
+     * Guard against regressions in security-sensitive entrypoints (#17, #20).
+     */
+    public function test_security_invariants_in_entrypoints(): void {
+        global $CFG;
+        $plugindir = $CFG->dirroot . '/auth/shibboleth_link';
+
+        // Issue #20: Ensure any header('Location:') call is immediately followed by exit; so execution never continues.
+        $phpfiles = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($plugindir));
+        foreach ($phpfiles as $file) {
+            if ($file->getExtension() !== 'php' || strpos($file->getPathname(), '/tests/') !== false) {
+                continue;
+            }
+            $code = file_get_contents($file->getPathname());
+            if (preg_match_all('/header\s*\(\s*[\'"]Location\s*:[^;]+;\s*([^\r\n;]+;)?/i', $code, $matches)) {
+                foreach ($matches[0] as $match) {
+                    $this->assertMatchesRegularExpression(
+                        '/;\s*(exit|die)\s*(\(\s*\))?\s*;/i',
+                        $match,
+                        'header("Location:") in ' . $file->getFilename() . ' must be immediately followed by exit; (#20).'
+                    );
+                }
+            }
+        }
+
+        // Issue #17: Ensure manage_linked_users.php enforces require_sesskey() on unlink.
+        $managecode = file_get_contents($plugindir . '/manage_linked_users.php');
+        $this->assertStringContainsString('require_sesskey();', $managecode);
+    }
 }
