@@ -59,7 +59,7 @@ Feature: Shibboleth link account creation, linking, and error handling
     Then I should see "erika.idp@bildung.gv.at"
     # Unlink legitimately via the POST form with valid sesskey.
     When I click on "Unlink" "button" in the "erika.idp@bildung.gv.at" "table_row"
-    And I accept the confirmation dialog
+    And I confirm the dialogue
     Then I should not see "erika.idp@bildung.gv.at"
 
   @javascript
